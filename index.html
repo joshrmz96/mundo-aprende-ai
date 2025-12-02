@@ -6,6 +6,8 @@
     <title>Clase Mágica de Mikhail</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Librería de Confeti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         .no-select { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
@@ -16,7 +18,7 @@
             min-height: 100vh;
             color: #334155;
             overflow-x: hidden; 
-            padding-bottom: 140px;
+            padding-bottom: 120px;
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -33,32 +35,39 @@
 
         .topic-card {
             background: white;
-            border-radius: 2rem;
+            border-radius: 1.5rem;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             position: relative;
-            height: 240px;
+            height: 220px;
             border: 4px solid white;
             z-index: 10;
-            touch-action: manipulation;
+            display: flex;
+            flex-direction: column;
         }
-        .topic-card:active { transform: scale(0.96); }
         
         .topic-image {
             height: 100%; width: 100%;
             background-size: cover; background-position: center;
-            pointer-events: none;
+            pointer-events: none; 
+            transition: transform 0.3s;
         }
         
         .topic-overlay {
             position: absolute; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0) 100%);
-            padding: 20px;
-            display: flex; align-items: flex-end;
-            height: 60%; pointer-events: none;
-            border-radius: 0 0 1.8rem 1.8rem;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0) 100%);
+            padding: 16px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            height: 70%; 
+            pointer-events: auto; 
+            cursor: pointer;
+        }
+
+        .topic-btn {
+            background: #2563eb; color: white; border-radius: 999px;
+            padding: 6px 16px; font-size: 0.9rem; font-weight: bold;
+            align-self: flex-start; margin-top: 8px;
+            box-shadow: 0 2px 0 #1e3a8a; pointer-events: none;
         }
 
         .fact-card {
@@ -74,8 +83,6 @@
             flex-shrink: 0;
         }
         .fact-nav-btn:active { background: #d97706; color: white; transform: scale(0.9); }
-
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
 
         .btn-fun {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
@@ -104,9 +111,9 @@
 
         .btn-load-more {
             background: linear-gradient(45deg, #FF6B6B, #FF8E53); color: white; border: none;
-            border-radius: 2rem; width: 100%; padding: 1.2rem;
-            font-weight: 700; font-family: 'Fredoka', sans-serif; font-size: 1.3rem;
-            transition: all 0.3s; cursor: pointer; margin-top: 2rem; position: relative; z-index: 20;
+            border-radius: 2rem; width: 100%; padding: 1rem;
+            font-weight: 700; font-family: 'Fredoka', sans-serif; font-size: 1.2rem;
+            transition: all 0.3s; cursor: pointer; margin-top: 1rem; position: relative; z-index: 20;
             box-shadow: 0 6px 0 #d14424; text-shadow: 0 2px 2px rgba(0,0,0,0.2);
         }
         .btn-load-more:active { transform: translateY(4px); box-shadow: 0 2px 0 #d14424; }
@@ -137,9 +144,24 @@
             background-color: white; background-size: cover; background-position: center;
             border-radius: 50%; box-shadow: 0 6px 0 #cbd5e1, 0 10px 20px rgba(0,0,0,0.15);
             cursor: pointer; border: 3px solid #fff;
-            transition: transform 0.2s; animation: bounce-float 4s ease-in-out infinite;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         #assistant-btn:active { transform: scale(0.9); }
+        #assistant-btn.move-up { transform: translateY(-110px); }
+
+        .side-menu-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 5000;
+            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px);
+        }
+        .side-menu {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: white; z-index: 5001; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column;
+        }
+        .side-menu-overlay.open { opacity: 1; visibility: visible; }
+        .side-menu-overlay.open .side-menu { transform: translateX(0); }
 
         .chat-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -166,12 +188,17 @@
         @media (min-width: 768px) { .chat-overlay.open .chat-box { transform: scale(1); } }
         
         .search-tag {
-            display: inline-block; background: white; color: #64748b;
-            padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+            display: inline-flex; align-items: center; background: white; color: #64748b;
+            padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
             border: 1px solid #e2e8f0; margin-right: 6px; margin-bottom: 8px;
             cursor: pointer; transition: all 0.2s;
         }
         .search-tag:active { background: #eff6ff; color: #3b82f6; border-color: #bfdbfe; }
+        .tag-delete {
+            margin-left: 6px; color: #94a3b8; font-weight: bold; padding: 0 4px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .tag-delete:hover { background: #fee2e2; color: #ef4444; }
 
         .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -186,50 +213,100 @@
             position: relative; top: 4px;
         }
         
-        @keyframes bounce-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        
         .flag-icon { width: 32px; height: 24px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .read-for-me-btn {
+            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #bae6fd;
+            color: #0284c7;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #bae6fd;
+        }
+        .read-for-me-btn:active { transform: translateY(2px); box-shadow: none; }
+        .read-for-me-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     </style>
 </head>
 <body class="no-select">
+
+    <!-- SONIDOS SFX -->
+    <audio id="sfx-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-correct" src="https://assets.mixkit.co/active_storage/sfx/1114/1114-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-wrong" src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3" preload="auto"></audio>
 
     <div id="global-loader" class="fixed inset-0" style="background: #f0f9ff; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <div class="text-7xl animate-bounce">👩‍🏫</div>
         <h2 class="text-2xl font-bold text-blue-600 mt-6 fun-font" data-i18n="preparing">Preparando tu estudio...</h2>
     </div>
 
-    <div id="nameInputScreen" class="fixed inset-0" style="display: flex; background: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; z-index: 6000;">
+    <!-- PANTALLA NOMBRE (Centrado Absoluto Mejorado) -->
+    <div id="nameInputScreen" class="fixed inset-0 w-full h-full" style="display: flex; background: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; z-index: 6000;">
         <div class="absolute top-0 right-0 p-4">
-            <button id="lang-toggle-intro" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30">
+            <button id="lang-toggle-intro" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30" onclick="playClickSound()">
                 <img id="lang-flag-img-intro" src="https://flagcdn.com/w40/mx.png" alt="MX" class="flag-icon" style="width: 24px; height: 18px;">
                 <span id="lang-text-intro" class="text-sm font-bold text-slate-700">ES</span>
             </button>
         </div>
         <div class="text-9xl mb-6">✏️</div>
-        <h2 id="namePrompt" class="text-4xl font-bold text-slate-800 fun-font mb-4">¿Cuál es tu nombre?</h2>
+        <h2 id="namePrompt" class="text-4xl font-bold text-slate-800 fun-font mb-4 text-center">¿Cuál es tu nombre?</h2>
         <p id="nameSubtitle" class="text-slate-500 text-lg mb-8 text-center max-w-sm">Así podré ser tu tutor personal.</p>
         <div class="w-full max-w-xs">
             <input type="text" id="nameInputField" class="w-full p-4 rounded-xl border-4 border-blue-200 focus:border-blue-500 outline-none text-slate-700 font-bold text-xl mb-6 text-center" placeholder="Tu Nombre">
-            <button id="nameSubmitBtn" class="btn-fun w-full py-4 text-xl">¡Empezar!</button>
+            <button id="nameSubmitBtn" class="btn-fun w-full py-4 text-xl" onclick="playClickSound()">¡Empezar!</button>
         </div>
     </div>
 
+    <!-- MENÚ LATERAL -->
+    <div id="side-menu-overlay" class="side-menu-overlay">
+        <div class="side-menu">
+            <div class="p-6 bg-blue-600 text-white flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold fun-font mb-1">Tu Progreso</h2>
+                    <p class="text-blue-100 text-sm">¡Sigue aprendiendo!</p>
+                </div>
+                <button onclick="document.getElementById('side-menu-overlay').classList.remove('open'); playClickSound()" class="text-white bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold">✕</button>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto">
+                <h3 class="font-bold text-slate-600 mb-2 uppercase text-xs tracking-wider">Lecciones Recientes</h3>
+                <div id="menu-history-list" class="space-y-2 mb-6"></div>
+                
+                <h3 class="font-bold text-slate-600 mb-2 uppercase text-xs tracking-wider">Tus Trofeos</h3>
+                <div id="menu-trophies-list" class="grid grid-cols-4 gap-2"></div>
+            </div>
+            <div class="p-4 border-t border-slate-100">
+                <button id="reset-user-btn" class="w-full py-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100" onclick="playClickSound()">Cerrar Sesión</button>
+            </div>
+        </div>
+        <div class="absolute inset-0 z-40" onclick="document.getElementById('side-menu-overlay').classList.remove('open')"></div>
+    </div>
+
+    <!-- APP CONTAINER -->
     <div id="app-container" class="max-w-6xl mx-auto p-4 md:p-8 opacity-0 transition-opacity duration-500 relative z-10" style="display:none;">
         <nav class="px-4 py-3 shadow-sm fixed top-0 left-0 right-0 max-w-6xl mx-auto" style="max-width: 100%; backdrop-filter: none; background: #f0f9ff;">
              <div class="max-w-6xl mx-auto flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <button id="menu-btn" class="flex items-center gap-3 active:scale-95 transition cursor-pointer" onclick="playClickSound()">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20 text-white font-bold transform -rotate-3 border-2 border-white">M</div>
-                    <div>
+                    <div class="text-left">
                         <h1 id="app-title-display" class="text-xl font-bold text-slate-800 leading-tight fun-font" data-i18n="appTitle">Mundo [NAME]</h1>
                         <div class="flex items-center gap-1.5 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 inline-block mt-0.5">
                             <span class="text-amber-500 text-xs">⭐</span>
                             <p class="text-[10px] font-bold text-amber-700" id="points-display">0 Puntos</p>
                         </div>
                     </div>
-                </div>
-                <div class="flex gap-2">
-                    <button id="reset-user-btn" class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold active:bg-slate-200 cursor-pointer">Salir</button>
-                    <button id="lang-toggle" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30">
+                </button>
+                <div class="flex gap-3 items-center">
+                    <button id="home-btn" class="text-2xl bg-white p-2 rounded-full border border-slate-200 shadow-sm active:bg-blue-50 transition cursor-pointer" onclick="playClickSound()">🏠</button>
+                    <button id="lang-toggle" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30" onclick="playClickSound()">
                         <img id="lang-flag-img" src="https://flagcdn.com/w40/mx.png" alt="MX" class="flag-icon" style="width: 24px; height: 18px;">
                         <span id="lang-text" class="text-sm font-bold text-slate-700">ES</span>
                     </button>
@@ -243,10 +320,10 @@
         </div>
 
         <div id="main-tabs" class="flex justify-center mb-10 gap-4 relative z-30 transition-all duration-300">
-            <button id="tab-lesson" data-view="lessonView" class="btn-fun shadow-blue-400 ring-4 ring-blue-50">
+            <button id="tab-lesson" data-view="lessonView" class="btn-fun shadow-blue-400 ring-4 ring-blue-50" onclick="playClickSound()">
                 <span data-i18n="tabLessons">📚 Lecciones</span>
             </button>
-            <button id="tab-quiz" data-view="quizView" class="btn-secondary-fun">
+            <button id="tab-quiz" data-view="quizView" class="btn-secondary-fun" onclick="playClickSound()">
                 <span data-i18n="tabQuizzes">🧠 Pruebas</span>
             </button>
         </div>
@@ -260,7 +337,7 @@
                             <div class="flex-grow min-w-0">
                                 <h3 class="font-bold text-amber-800 text-sm mb-0 fun-font flex justify-between items-center">
                                     <span data-i18n="factTitle">Curiosidad:</span>
-                                    <span class="text-[10px] bg-amber-100 px-2 py-0.5 rounded text-amber-600 whitespace-nowrap" id="fact-counter">1/5</span>
+                                    <span class="text-[10px] bg-amber-100 px-2 py-0.5 rounded text-amber-600 whitespace-nowrap" id="fact-counter">1/20</span>
                                 </h3>
                                 <div class="min-h-[24px] flex items-center">
                                     <p id="daily-fact" class="text-amber-900 font-medium text-sm animate-fade-in leading-snug line-clamp-2" data-i18n="loading">Cargando...</p>
@@ -269,8 +346,8 @@
                             <button class="ml-2 text-amber-500 hover:text-amber-700 text-lg flex-shrink-0 p-2" onclick="speak(document.getElementById('daily-fact').innerText)">🔊</button>
                         </div>
                         <div class="flex justify-between items-center mt-2 pt-2 border-t border-amber-100">
-                             <button id="prev-fact" class="fact-nav-btn">⬅️</button>
-                             <button id="next-fact" class="fact-nav-btn">➡️</button>
+                             <button id="prev-fact" class="fact-nav-btn" onclick="playClickSound()">⬅️</button>
+                             <button id="next-fact" class="fact-nav-btn" onclick="playClickSound()">➡️</button>
                         </div>
                     </div>
                 </div>
@@ -282,7 +359,7 @@
                         <div id="search-mic-container" class="absolute right-20 top-0 bottom-0 flex items-center justify-center w-12 z-50">
                             <button id="search-mic-btn" type="button" class="text-2xl text-slate-400 hover:text-blue-500 active:text-red-500 transition cursor-pointer w-full h-full flex items-center justify-center active:scale-125">🎤</button>
                         </div>
-                        <button id="search-btn" class="absolute right-2 top-2 bottom-2 bg-blue-600 text-white px-6 rounded-full font-bold active:bg-blue-700 shadow-md transition text-sm sm:text-lg cursor-pointer z-40" data-i18n="go">Ir</button>
+                        <button id="search-btn" class="absolute right-2 top-2 bottom-2 bg-blue-600 text-white px-6 rounded-full font-bold active:bg-blue-700 shadow-md transition text-sm sm:text-lg cursor-pointer z-40" data-i18n="go" onclick="playClickSound()">Ir</button>
                     </div>
                     <div id="search-history-container" class="mt-4 px-2 hidden">
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2" data-i18n="recent">Recientes:</p>
@@ -290,14 +367,27 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-center mb-8 gap-6 relative z-30">
-                     <button id="subtab-explore" class="text-blue-600 font-bold border-b-4 border-blue-600 pb-2 transition text-lg px-2 cursor-pointer">🚀 <span data-i18n="explore">Explorar</span></button>
-                    <button id="subtab-trophies" class="text-slate-400 font-bold border-b-4 border-transparent pb-2 active:text-slate-600 transition text-lg px-2 cursor-pointer">🏆 <span data-i18n="trophies">Trofeos</span></button>
+                <div class="flex items-center justify-center mb-8 gap-3 sm:gap-6 relative z-30 overflow-x-auto px-2 pb-2 no-scrollbar">
+                     <button id="subtab-explore" class="text-blue-600 font-bold border-b-4 border-blue-600 pb-2 transition text-sm sm:text-lg px-2 cursor-pointer whitespace-nowrap" onclick="playClickSound()">🚀 <span data-i18n="explore">Explorar</span></button>
+                     <button id="subtab-branches" class="text-slate-400 font-bold border-b-4 border-transparent pb-2 active:text-slate-600 transition text-sm sm:text-lg px-2 cursor-pointer whitespace-nowrap" onclick="playClickSound()">🌿 Ramas</button>
+                    <button id="subtab-trophies" class="text-slate-400 font-bold border-b-4 border-transparent pb-2 active:text-slate-600 transition text-sm sm:text-lg px-2 cursor-pointer whitespace-nowrap" onclick="playClickSound()">🏆 <span data-i18n="trophies">Trofeos</span></button>
                 </div>
 
                 <div id="section-explore">
+                    <div id="clear-filter-container" class="hidden mb-4 text-center">
+                        <button id="clear-filter-btn" class="text-blue-600 font-bold text-sm bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition shadow-sm border border-blue-100" onclick="playClickSound()">
+                            ⬅ Volver a todas las Ramas
+                        </button>
+                    </div>
                     <div id="category-mosaics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative z-10"></div>
-                    <button id="load-more-btn" class="btn-load-more text-lg" data-i18n="loadMore">🌟 ¡Ver más cosas! 🌟</button>
+                    <button id="load-more-btn" class="btn-load-more text-lg" data-i18n="loadMore" onclick="playClickSound()">🌟 ¡Generar más! 🌟</button>
+                </div>
+
+                <div id="section-branches" class="hidden">
+                    <div class="text-center mb-4">
+                        <p class="text-slate-500 text-sm">Selecciona un tema favorito:</p>
+                    </div>
+                    <div id="branches-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"></div>
                 </div>
 
                 <div id="section-trophies" class="hidden">
@@ -305,19 +395,19 @@
                 </div>
             </div>
 
+            <!-- Detalle de Lección -->
             <div id="lessonDetailContainer" class="hidden max-w-4xl mx-auto pb-24 relative z-20 mt-2">
                 <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden relative border border-slate-100">
                     <div id="lesson-header-bg" class="h-64 sm:h-96 bg-slate-100 relative w-full group">
                         <div class="absolute top-4 left-4 z-30">
-                            <button id="back-button" class="flex items-center text-slate-600 active:text-blue-600 transition font-bold text-base bg-white/90 backdrop-blur-md px-5 py-2 rounded-full shadow-lg border-2 border-white group cursor-pointer">
-                                <span class="group-active:-translate-x-1 transition">⬅️</span> <span data-i18n="back" class="ml-2">Volver</span>
+                            <button id="back-button" class="flex items-center text-slate-600 active:text-blue-600 transition font-bold text-base bg-white/90 backdrop-blur-md px-5 py-2 rounded-full shadow-lg border-2 border-white group cursor-pointer hover:bg-blue-50" onclick="playClickSound()">
+                                <span class="group-active:-translate-x-1 transition text-xl mr-2">⬅️</span> <span data-i18n="back">Volver</span>
                             </button>
                         </div>
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
                         <div class="absolute bottom-0 left-0 p-6 sm:p-10 w-full z-10">
                             <h2 id="lesson-title" class="text-4xl sm:text-6xl text-white font-bold fun-font drop-shadow-xl mb-2 leading-tight">...</h2>
                         </div>
-                        <button class="absolute bottom-6 right-6 bg-white/20 backdrop-blur-md border-2 border-white/50 text-white p-4 rounded-full shadow-xl active:scale-95 transition z-20 cursor-pointer" onclick="speak(document.getElementById('lesson-title').innerText)">🔊</button>
                     </div>
                     
                     <div class="p-6 sm:p-14">
@@ -329,14 +419,17 @@
                         <div id="lesson-error-state" class="hidden text-center py-12">
                              <div class="text-6xl mb-4">🙈</div>
                              <h3 class="text-xl font-bold text-slate-700 mb-2" data-i18n="errorTitle">¡Ups! Se nos cayó la tiza</h3>
-                             <button id="retry-lesson-btn" class="btn-fun" data-i18n="retry">Intentar de nuevo</button>
+                             <button id="retry-lesson-btn" class="btn-fun" data-i18n="retry" onclick="playClickSound()">Intentar de nuevo</button>
                         </div>
 
                         <div id="lesson-content-wrapper" class="hidden animate-fade-in">
+                            <button id="read-for-me-btn" class="read-for-me-btn" onclick="playClickSound()">
+                                <span class="text-2xl">🗣️</span> <span class="text-lg">Léelo por mí</span>
+                            </button>
+
                             <div class="bg-blue-50/50 p-6 sm:p-10 rounded-[2rem] mb-10 border-2 border-blue-100">
                                 <div class="prose max-w-none text-slate-700 leading-loose text-xl sm:text-2xl font-medium">
                                     <div id="lesson-content" class="inline">...</div>
-                                    <button class="inline-speak-btn bg-white" onclick="speak(document.getElementById('lesson-content').innerText)">🔊</button>
                                 </div>
                             </div>
                             <div id="lesson-questions-section" class="mb-10">
@@ -344,8 +437,8 @@
                                 <div id="lesson-questions-list" class="space-y-6"></div>
                             </div>
                             <div class="flex flex-col sm:flex-row gap-4 mt-8">
-                                 <button id="generate-button" class="flex-1 btn-secondary-fun py-4 text-lg flex items-center justify-center gap-2">✨ <span data-i18n="regenerate">Versión más larga</span></button>
-                                <button id="complete-button" class="flex-[2] btn-fun py-4 text-lg shadow-lg shadow-blue-500/30 text-white">✅ <span data-i18n="complete">¡Terminé!</span> (+50)</button>
+                                 <button id="generate-button" class="flex-1 btn-secondary-fun py-4 text-lg flex items-center justify-center gap-2" onclick="playClickSound()">✨ <span data-i18n="regenerate">Versión más larga</span></button>
+                                <button id="complete-button" class="flex-[2] btn-fun py-4 text-lg shadow-lg shadow-blue-500/30 text-white" onclick="playClickSound()">✅ <span data-i18n="complete">¡Terminé!</span> (+50)</button>
                             </div>
                             <div class="mt-12 pt-8 border-t-4 border-dashed border-slate-100">
                                 <div id="show-more-btn" class="text-center mb-6"><h3 class="text-xl font-bold text-slate-400" data-i18n="moreInfo">👇 Sigue explorando</h3></div>
@@ -370,8 +463,7 @@
                          <div id="quiz-history-list" class="max-h-60 overflow-y-auto pr-2 text-sm text-slate-500"><p data-i18n="noQuizHistory">Aún no has hecho ninguna prueba.</p></div>
                     </div>
                     <div class="flex flex-col justify-center gap-4">
-                        <button id="start-random-quiz" class="btn-fun text-lg w-full py-4" data-i18n="startQuiz">🚀 Iniciar Prueba Sorpresa</button>
-                        <button onclick="document.getElementById('tab-lesson').click()" class="btn-secondary-fun text-lg w-full" data-i18n="goToStudy">Ir a Estudiar</button>
+                        <button id="start-random-quiz" class="btn-fun text-lg w-full py-4" data-i18n="startQuiz" onclick="playClickSound()">🚀 Iniciar Prueba Sorpresa</button>
                     </div>
                 </div>
             </div>
@@ -381,21 +473,22 @@
                     <div class="flex justify-between items-center mb-8 border-b-2 border-slate-100 pb-6">
                         <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 fun-font" id="quiz-topic-title">Cargando...</h2>
                         <div class="flex gap-2 items-center">
-                            <button onclick="exitQuiz()" class="btn-danger-fun" data-i18n="exit">Salir</button>
+                            <button onclick="exitQuiz(); playClickSound()" class="btn-danger-fun" data-i18n="exit">Salir</button>
                         </div>
                     </div>
                     <div id="quiz-questions-list" class="space-y-6"></div>
-                    <button id="finish-quiz-btn" class="hidden mt-8 w-full btn-fun text-lg py-4" data-i18n="saveResult">Guardar Resultado</button>
+                    <button id="finish-quiz-btn" class="hidden mt-8 w-full btn-fun text-lg py-4" data-i18n="saveResult" onclick="playClickSound()">Guardar Resultado</button>
                     <div id="quiz-result" class="hidden mt-8 p-6 bg-green-50 rounded-[2rem] border-2 border-green-200 text-center animate-fade-in">
                         <p class="text-3xl sm:text-4xl font-bold text-green-600 fun-font mb-2" data-i18n="quizFinished">¡Prueba Finalizada! 🎉</p>
                         <p class="text-green-700 font-bold text-xl" id="quiz-score-text">+30 Puntos</p>
-                        <button onclick="exitQuiz()" class="mt-6 btn-secondary-fun" data-i18n="backQuiz">Volver</button>
+                        <button onclick="exitQuiz(); playClickSound()" class="mt-6 btn-secondary-fun" data-i18n="backQuiz">Volver</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- AUDIO PLAYER -->
     <div id="sticky-audio-player">
         <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg border-4 border-white animate-pulse flex-shrink-0">👩‍🏫</div>
         <div class="flex-grow mx-4 overflow-hidden">
@@ -403,12 +496,17 @@
             <p class="text-sm font-bold text-slate-800 truncate" id="player-status" data-i18n="loadingVoice">Cargando voz...</p>
         </div>
         <div class="flex items-center gap-3">
-            <button id="player-play-pause" class="w-12 h-12 rounded-full bg-slate-900 text-white font-bold text-xl active:bg-slate-700 shadow-md transition-all flex items-center justify-center cursor-pointer">⏸</button>
-            <button id="player-close" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 active:bg-red-100 active:text-red-500 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer">✕</button>
+            <button id="player-play-pause" class="w-12 h-12 rounded-full bg-slate-900 text-white font-bold text-xl active:bg-slate-700 shadow-md transition-all flex items-center justify-center cursor-pointer" onclick="playClickSound()">⏸</button>
+            <button id="player-close" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 active:bg-red-100 active:text-red-500 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer" onclick="playClickSound()">✕</button>
         </div>
     </div>
 
-    <button id="assistant-btn"></button>
+    <!-- MUSICA DE FONDO (Loop) -->
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a7346b.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="assistant-btn" onclick="playClickSound()"></button>
 
     <div class="chat-overlay" id="chat-overlay">
         <div class="chat-box">
@@ -424,15 +522,15 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="minimize-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold mb-2 transition cursor-pointer">_</button>
-                    <button id="close-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-2xl transition cursor-pointer">✕</button>
+                    <button id="minimize-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold mb-2 transition cursor-pointer" onclick="playClickSound()">_</button>
+                    <button id="close-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-2xl transition cursor-pointer" onclick="playClickSound()">✕</button>
                 </div>
             </div>
             <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-4 bg-slate-50 text-base"></div>
             <div class="p-3 bg-white border-t border-slate-100 flex gap-2 items-center flex-shrink-0 pb-6 md:pb-3">
                 <button id="voice-chat-btn" class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 active:bg-blue-600 active:text-white transition flex items-center justify-center flex-shrink-0 text-xl shadow-sm border-2 border-transparent cursor-pointer">🎤</button>
                 <input type="text" id="chat-input" class="flex-grow bg-slate-100 rounded-full px-4 py-2 outline-none focus:ring-4 focus:ring-blue-100 text-base h-12 text-slate-700 placeholder-slate-400" placeholder="Escribe tu duda...">
-                <button id="send-chat" class="bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg active:bg-blue-700 flex items-center justify-center flex-shrink-0 text-xl transform active:scale-95 transition cursor-pointer">➤</button>
+                <button id="send-chat" class="bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg active:bg-blue-700 flex items-center justify-center flex-shrink-0 text-xl transform active:scale-95 transition cursor-pointer" onclick="playClickSound()">➤</button>
             </div>
         </div>
     </div>
@@ -447,15 +545,84 @@
         const geminiTtsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiApiKey}`;
         const robiIconUrl = "https://image.pollinations.ai/prompt/cute%203d%20avatar%20young%20female%20teacher%20low%20ponytail%20black%20hair%20black%20glasses%20friendly%20icon%20soft%20lighting?width=150&height=150&nologo=true";
 
+        const BRANCHES = [
+            { name: "Ciencia", icon: "🔬" }, { name: "Historia", icon: "🏺" }, { name: "Espacio", icon: "🚀" },
+            { name: "Arte", icon: "🎨" }, { name: "Animales", icon: "🦁" }, { name: "Tecnología", icon: "💻" },
+            { name: "Naturaleza", icon: "🌳" }, { name: "Música", icon: "🎵" }, { name: "Geografía", icon: "🌍" },
+            { name: "Deportes", icon: "⚽" }, { name: "Matemáticas", icon: "➗" }, { name: "Literatura", icon: "📚" },
+            { name: "Cuerpo", icon: "🦴" }, { name: "Océanos", icon: "🐳" }, { name: "Profesiones", icon: "👩‍🚒" },
+            { name: "Vehículos", icon: "🚗" }, { name: "Comida", icon: "🍕" }, { name: "Inventos", icon: "💡" }
+        ];
+
+        const BRANCH_TOPICS = {
+            "Ciencia": ["Volcanes", "Electricidad", "Imanes", "Microscopios", "Química", "Física", "El Clima", "Arcoíris", "Átomos"],
+            "Historia": ["Egipto", "Castillos", "Vikingos", "Romanos", "Mayas", "Griegos", "Caballeros", "Pirámides", "Reyes"],
+            "Espacio": ["Planetas", "La Luna", "El Sol", "Estrellas", "Agujeros Negros", "Cohetes", "Astronautas", "Galaxias", "Cometas"],
+            "Arte": ["Pintura", "Leonardo da Vinci", "Colores", "Museos", "Fotografía", "Cine", "Dibujos", "Teatro", "Escultura"],
+            "Animales": ["Dinosaurios", "Tiburones", "Insectos", "Mamíferos", "Aves", "Reptiles", "Osos Polares", "Leones", "Mariposas"],
+            "Tecnología": ["Robots", "Trenes", "Aviones", "Computadoras", "Internet", "Videojuegos", "Coches", "IA", "Teléfonos"],
+            "Naturaleza": ["Lluvia", "Bosques", "Montañas", "Ríos", "Desiertos", "Flores", "Reciclaje", "Arboles", "Plantas"],
+            "Música": ["Instrumentos", "Mozart", "Beethoven", "Ritmo", "Orquesta", "Canciones", "Ópera", "Rock", "Piano"],
+            "Geografía": ["Mapas", "Banderas", "Capitales", "Continentes", "Océanos", "Volcanes", "Ciudades", "Selvas", "Polos"],
+            "Deportes": ["Fútbol", "Baloncesto", "Natación", "Olimpiadas", "Tenis", "Gimnasia", "Karate", "Béisbol", "Carreras"],
+            "Matemáticas": ["Sumas", "Restas", "Formas", "Números", "Medidas", "Reloj", "Dinero", "Fracciones", "Geometría"],
+            "Literatura": ["Cuentos", "Poemas", "Fábulas", "Don Quijote", "Harry Potter", "Leyendas", "Mitos", "Libros", "Escritores"],
+            "Cuerpo": ["Cerebro", "Corazón", "Huesos", "Músculos", "Sentidos", "Dientes", "Digestión", "ADN", "Células"],
+            "Océanos": ["Ballenas", "Corales", "Submarinos", "Playas", "Olas", "Medusas", "Pulpos", "Barcos", "Icebergs"],
+            "Profesiones": ["Bomberos", "Médicos", "Policías", "Maestros", "Científicos", "Artistas", "Granjeros", "Pilotos", "Chefs"],
+            "Vehículos": ["Coches", "Camiones", "Barcos", "Aviones", "Helicópteros", "Bicicletas", "Motos", "Autobuses", "Tractores"],
+            "Comida": ["Frutas", "Verduras", "Pan", "Chocolate", "Pizza", "Vitaminas", "Cocina", "Postres", "Desayuno"],
+            "Inventos": ["Rueda", "Bombilla", "Teléfono", "Imprenta", "Internet", "Brújula", "Reloj", "Cámara", "Papel"]
+        };
+
         const STATIC_TOPICS_ES = ["Los Planetas", "Dinosaurios", "Volcanes", "El Océano", "El Cuerpo Humano", "Antiguo Egipto", "Los Robots", "La Electricidad", "Animales Polares", "La Lluvia", "Las Abejas", "El Espacio", "Los Castillos", "Las Pirámides", "Los Tiburones", "La Fotosíntesis", "La Gravedad", "Los Trenes", "Los Aviones", "Los Bosques"];
         const STATIC_TOPICS_EN = ["The Planets", "Dinosaurs", "Volcanoes", "The Ocean", "Human Body", "Ancient Egypt", "Robots", "Electricity", "Polar Animals", "Rain", "Bees", "Space", "Castles", "Pyramids", "Sharks", "Photosynthesis", "Gravity", "Trains", "Airplanes", "Forests"];
-        const BASE_FACTS = [ { es: "Las abejas bailan para decir dónde están las flores.", en: "Bees dance to tell where flowers are." }, { es: "El corazón de un camarón está en su cabeza.", en: "A shrimp's heart is in its head." }, { es: "Los delfines duermen con un ojo abierto.", en: "Dolphins sleep with one eye open." }, { es: "Venus es el planeta más caliente del sistema solar.", en: "Venus is the hottest planet in the solar system." }, { es: "Los pulpos tienen 3 corazones.", en: "Octopuses have 3 hearts." } ];
+        
+        const BASE_FACTS = [
+            { es: "Las abejas bailan para decir dónde están las flores.", en: "Bees dance to tell where flowers are." },
+            { es: "El corazón de un camarón está en su cabeza.", en: "A shrimp's heart is in its head." },
+            { es: "Los delfines duermen con un ojo abierto.", en: "Dolphins sleep with one eye open." },
+            { es: "Venus es el planeta más caliente.", en: "Venus is the hottest planet." },
+            { es: "Los pulpos tienen 3 corazones.", en: "Octopuses have 3 hearts." },
+            { es: "Las hormigas no duermen.", en: "Ants never sleep." },
+            { es: "El chocolate viene de una fruta.", en: "Chocolate comes from a fruit." },
+            { es: "Los canguros no pueden caminar hacia atrás.", en: "Kangaroos can't walk backwards." },
+            { es: "La miel nunca se echa a perder.", en: "Honey never spoils." },
+            { es: "Los cocodrilos lloran cuando comen.", en: "Crocodiles cry when they eat." },
+            { es: "Hay más estrellas que granos de arena.", en: "More stars than sand grains." },
+            { es: "Las jirafas tienen la lengua azul.", en: "Giraffes have blue tongues." },
+            { es: "El sol es una estrella gigante.", en: "The sun is a giant star." },
+            { es: "Los pingüinos tienen rodillas.", en: "Penguins have knees." },
+            { es: "Los gatos duermen el 70% de su vida.", en: "Cats sleep 70% of their lives." },
+            { es: "El agua moja porque es pegajosa.", en: "Water is sticky." },
+            { es: "Las mariposas saborean con los pies.", en: "Butterflies taste with feet." },
+            { es: "El ojo del avestruz es más grande que su cerebro.", en: "Ostrich eye is bigger than brain." },
+            { es: "Los caracoles pueden dormir 3 años.", en: "Snails can sleep 3 years." },
+            { es: "Tu nariz nunca deja de crecer.", en: "Your nose never stops growing." }
+        ];
 
-        const state = { lang: localStorage.getItem('appLang') || 'es', userName: localStorage.getItem('userName') || null, points: 0, history: [], quizHistory: [], currentLesson: null, audioCache: new Map(), audioSource: null, isPlaying: false, currentText: "", itemsToShow: 9, isVoiceActive: false, isNative: false, currentFacts: [], currentFactIndex: 0, searchHistory: [], chatHistory: [] };
+        const state = { 
+            lang: localStorage.getItem('appLang') || 'es', 
+            userName: localStorage.getItem('userName') || null, 
+            points: 0, 
+            history: [], 
+            quizHistory: [], 
+            currentLesson: null, 
+            audioCache: new Map(), 
+            audioSource: null, 
+            isPlaying: false, 
+            audioLoading: false, 
+            itemsToShow: 9, 
+            currentFacts: [], 
+            currentFactIndex: 0, 
+            searchHistory: [], 
+            chatHistory: [], 
+            currentBranch: null 
+        };
 
         const i18n = {
-            es: { preparing: "Preparando...", appTitle: "Mundo [NAME]", welcome: "¡Hola, [NAME]! 👋", subtitle: "¿Qué quieres descubrir hoy?", tabLessons: "📚 Lecciones", tabQuizzes: "🧠 Pruebas", factTitle: "Curiosidad:", loading: "Cargando...", go: "Ir", recent: "Recientes:", explore: "Explorar", trophies: "Trofeos", loadMore: "🌟 ¡Ver más cosas! 🌟", back: "Volver", preparingLesson: "Robi está preparando la clase...", errorTitle: "¡Ups!", errorDesc: "Robi tuvo un problema.", retry: "Reintentar", letsPractice: "¡Practiquemos!", regenerate: "Versión más larga", complete: "¡Terminé!", moreInfo: "👇 Sigue explorando", quizZone: "Zona de Pruebas", quizDesc: "¡Demuestra lo que sabes!", quizHistory: "Tu Historial:", noQuizHistory: "Sin pruebas.", startQuiz: "🚀 Iniciar Prueba", goToStudy: "Ir a Estudiar", finalExam: "Examen Final", exit: "Salir", saveResult: "Guardar Resultado", quizFinished: "¡Finalizada! 🎉", backQuiz: "Volver", profGemini: "PROFE AI", loadingVoice: "Cargando voz...", personalTutor: "Tu Profe Personal", historyBtn: "📜 Historial", chatPlaceholder: "Escribe tu duda...", searchPlaceholder: "✨ Busca aquí...", points: "Puntos", won: "GANADO", question: "Pregunta", correct: "¡Correcto!", tryAgain: "Intenta otra vez", thinking: "Pensando...", voiceBasic: "Voz básica...", greeting: "¡Hola! Soy Robi. 🍎", namePrompt: "¿Cuál es tu nombre?", nameSubtitle: "Seré tu tutor personal.", nameSubmit: "¡Empezar!" },
-            en: { preparing: "Preparing...", appTitle: "[NAME]'s World", welcome: "Hello, [NAME]! 👋", subtitle: "Discover today?", tabLessons: "📚 Lessons", tabQuizzes: "🧠 Quizzes", factTitle: "Fun Fact:", loading: "Loading...", go: "Go", recent: "Recent:", explore: "Explore", trophies: "Trophies", loadMore: "🌟 See more! 🌟", back: "Back", preparingLesson: "Robi is preparing...", errorTitle: "Oops!", errorDesc: "Problem.", retry: "Retry", letsPractice: "Let's Practice!", regenerate: "Longer Version", complete: "Done!", moreInfo: "👇 Explore", quizZone: "Quiz Zone", quizDesc: "Show knowledge!", quizHistory: "History:", noQuizHistory: "No quizzes.", startQuiz: "🚀 Start Quiz", goToStudy: "Go Study", finalExam: "Exam", exit: "Exit", saveResult: "Save", quizFinished: "Finished! 🎉", backQuiz: "Back", profGemini: "GEMINI", loadingVoice: "Loading voice...", personalTutor: "Tutor", historyBtn: "📜 History", chatPlaceholder: "Type...", searchPlaceholder: "✨ Search...", points: "Points", won: "WON", question: "Question", correct: "Correct!", tryAgain: "Try again", thinking: "Thinking...", voiceBasic: "Basic voice...", greeting: "Hi! I'm Robi. 🍎", namePrompt: "Name?", nameSubtitle: "Your tutor.", nameSubmit: "Start!" }
+            es: { preparing: "Preparando...", appTitle: "Mundo [NAME]", welcome: "¡Hola, [NAME]! 👋", subtitle: "¿Qué quieres descubrir hoy?", tabLessons: "📚 Lecciones", tabQuizzes: "🧠 Pruebas", factTitle: "Curiosidad:", loading: "Cargando...", go: "Ir", recent: "Recientes:", explore: "Explorar", trophies: "Trofeos", loadMore: "🌟 ¡Generar más! 🌟", back: "Volver", preparingLesson: "Robi está preparando la clase...", errorTitle: "¡Ups!", errorDesc: "Robi tuvo un problema.", retry: "Reintentar", letsPractice: "¡Practiquemos!", regenerate: "Versión más larga", complete: "¡Terminé!", moreInfo: "👇 Sigue explorando", quizZone: "Zona de Pruebas", quizDesc: "¡Demuestra lo que sabes!", quizHistory: "Tu Historial:", noQuizHistory: "Sin pruebas.", startQuiz: "🚀 Iniciar Prueba", goToStudy: "Ir a Estudiar", finalExam: "Examen Final", exit: "Salir", saveResult: "Guardar Resultado", quizFinished: "¡Finalizada! 🎉", backQuiz: "Volver", profGemini: "PROFE AI", loadingVoice: "Cargando voz...", personalTutor: "Tu Profe Personal", historyBtn: "📜 Historial", chatPlaceholder: "Escribe tu duda...", searchPlaceholder: "✨ Busca aquí...", points: "Puntos", won: "GANADO", question: "Pregunta", correct: "¡Correcto!", tryAgain: "Intenta otra vez", thinking: "Pensando...", voiceBasic: "Voz básica...", greeting: "¡Hola! Soy Robi. 🍎", namePrompt: "¿Cuál es tu nombre?", nameSubtitle: "Seré tu tutor personal.", nameSubmit: "¡Empezar!" },
+            en: { preparing: "Preparing...", appTitle: "[NAME]'s World", welcome: "Hello, [NAME]! 👋", subtitle: "Discover today?", tabLessons: "📚 Lessons", tabQuizzes: "🧠 Quizzes", factTitle: "Fun Fact:", loading: "Loading...", go: "Go", recent: "Recent:", explore: "Explore", trophies: "Trophies", loadMore: "🌟 Generate more! 🌟", back: "Back", preparingLesson: "Robi is preparing...", errorTitle: "Oops!", errorDesc: "Problem.", retry: "Retry", letsPractice: "Let's Practice!", regenerate: "Longer Version", complete: "Done!", moreInfo: "👇 Explore", quizZone: "Quiz Zone", quizDesc: "Show knowledge!", quizHistory: "History:", noQuizHistory: "No quizzes.", startQuiz: "🚀 Start Quiz", goToStudy: "Go Study", finalExam: "Exam", exit: "Exit", saveResult: "Save", quizFinished: "Finished! 🎉", backQuiz: "Back", profGemini: "GEMINI", loadingVoice: "Loading voice...", personalTutor: "Tutor", historyBtn: "📜 History", chatPlaceholder: "Type...", searchPlaceholder: "✨ Search...", points: "Points", won: "WON", question: "Question", correct: "Correct!", tryAgain: "Try again", thinking: "Thinking...", voiceBasic: "Basic voice...", greeting: "Hi! I'm Robi. 🍎", namePrompt: "Name?", nameSubtitle: "Your tutor.", nameSubmit: "Start!" }
         };
 
         window.b64ToBuf = function(b64) { const bin=atob(b64); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return arr.buffer; }
@@ -465,6 +632,12 @@
             if(!str) return "";
             return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
         }
+
+        // --- HELPER PARA SONIDOS ---
+        function playClickSound() { document.getElementById('sfx-click').play().catch(()=>{}); }
+        function playWinSound() { document.getElementById('sfx-win').play().catch(()=>{}); }
+        function playCorrectSound() { document.getElementById('sfx-correct').play().catch(()=>{}); }
+        function playWrongSound() { document.getElementById('sfx-wrong').play().catch(()=>{}); }
 
         function updateUI() {
             const t = i18n[state.lang];
@@ -485,54 +658,244 @@
             document.getElementById('points-display').textContent = `${state.points} ${t.points}`;
             document.getElementById('assistant-btn').style.backgroundImage = `url('${robiIconUrl}')`;
             document.getElementById('chat-header-icon').style.backgroundImage = `url('${robiIconUrl}')`;
-            updateFactUI(); renderMosaics(); renderHistory(); renderQuizHistory(); renderSearchHistory();
+            updateFactUI(); renderMosaics(); renderBranches(); renderHistory(); renderQuizHistory(); renderSearchHistory(); renderMenuHistory();
         }
 
-        function getImageUrl(topicEn) { return `https://image.pollinations.ai/prompt/modern%20editorial%20illustration%20of%20${encodeURIComponent(topicEn)}%20flat%20vector%20art%20vibrant%20gradients%20clean%20shapes%20soft%20shadows%20minimalist%20tech%20style%20full%20scene%20colorful%20background%20high%20quality?width=600&height=400&nologo=true`; }
+        function getImageUrl(topicEn) { 
+            return `https://image.pollinations.ai/prompt/illustration%20of%20${encodeURIComponent(topicEn)}%20vector%20flat%20colorful?width=600&height=400&nologo=true`; 
+        }
 
-        function initFacts() { state.currentFacts = [...BASE_FACTS].sort(() => 0.5 - Math.random()).slice(0, 5); state.currentFactIndex = 0; updateFactUI(); }
+        function initFacts() { 
+            state.currentFacts = [...BASE_FACTS].sort(() => 0.5 - Math.random()).slice(0, 5); 
+            state.currentFactIndex = 0; 
+            updateFactUI(); 
+        }
         function getTranslatedFact(factObj) { return factObj[state.lang] || factObj.es; }
-        function updateFactUI() { if(state.currentFacts.length === 0) initFacts(); const factObj = state.currentFacts[state.currentFactIndex]; const factText = getTranslatedFact(factObj); const el = document.getElementById('daily-fact'); el.style.opacity = '0'; setTimeout(() => { el.innerText = factText; el.style.opacity = '1'; document.getElementById('fact-counter').innerText = `${state.currentFactIndex + 1}/5`; }, 200); }
-        document.getElementById('next-fact').onclick = () => { if(state.currentFactIndex < 4) { state.currentFactIndex++; updateFactUI(); } else { state.currentFacts = [...BASE_FACTS].sort(() => 0.5 - Math.random()).slice(0, 5); state.currentFactIndex = 0; updateFactUI(); } };
+        function updateFactUI() { 
+            if(state.currentFacts.length === 0) initFacts(); 
+            const factObj = state.currentFacts[state.currentFactIndex]; 
+            const factText = getTranslatedFact(factObj); 
+            const el = document.getElementById('daily-fact'); 
+            el.style.opacity = '0'; 
+            setTimeout(() => { 
+                el.innerText = factText; 
+                el.style.opacity = '1'; 
+                document.getElementById('fact-counter').innerText = `${state.currentFactIndex + 1}/5`; 
+            }, 200); 
+        }
+        
+        setInterval(() => { document.getElementById('next-fact').click(); }, 8000);
+
+        document.getElementById('next-fact').onclick = () => { 
+            if(state.currentFactIndex < 4) { state.currentFactIndex++; updateFactUI(); } else { initFacts(); } 
+        };
         document.getElementById('prev-fact').onclick = () => { if(state.currentFactIndex > 0) { state.currentFactIndex--; updateFactUI(); } };
 
-        function renderMosaics(append = false) {
-            const container = document.getElementById('category-mosaics'); if(!append) container.innerHTML = ''; const list = state.lang === 'es' ? STATIC_TOPICS_ES : STATIC_TOPICS_EN;
-            for(let i=0; i < Math.min(state.itemsToShow, list.length); i++) {
-                const topic = list[i]; if(append && i < state.itemsToShow - 9) continue; const card = document.createElement('div'); card.className = "topic-card animate-fade-in"; const topicEn = STATIC_TOPICS_EN[i] || topic; const img = getImageUrl(topicEn);
-                card.innerHTML = `<div class="topic-image" style="background-image: url('${img}')"></div><div class="topic-overlay"><span class="font-bold text-white text-2xl fun-font drop-shadow-md tracking-wide">${topic}</span></div>`;
+        function renderMosaics(topicList = null, containerId = 'category-mosaics') {
+            const container = document.getElementById(containerId); 
+            if(!container) return;
+            
+            if (!topicList && state.itemsToShow === 9) container.innerHTML = '';
+            else if(topicList) container.innerHTML = ''; 
+
+            const list = topicList || (state.lang === 'es' ? STATIC_TOPICS_ES : STATIC_TOPICS_EN);
+            
+            let start = 0;
+            let end = list.length;
+            
+            if (!topicList) {
+                if(state.itemsToShow > 9 && container.children.length > 0) start = container.children.length;
+                end = Math.min(state.itemsToShow, list.length);
+            }
+
+            for(let i=start; i < end; i++) {
+                const topic = list[i]; 
+                const topicEn = topic; 
+                const img = getImageUrl(topicEn);
+                
+                const card = document.createElement('div'); 
+                card.className = "topic-card animate-fade-in"; 
+                
+                card.innerHTML = `
+                    <div class="topic-image" style="background-image: url('${img}')"></div>
+                    <div class="topic-overlay">
+                        <span class="font-bold text-white text-2xl fun-font drop-shadow-md tracking-wide mb-1 leading-tight">${topic}</span>
+                        <button class="topic-btn">Ver Lección</button>
+                    </div>
+                `;
                 const load = () => loadLesson(topic, topic, topicEn, img, false);
-                card.onclick = load; card.ontouchstart = (e) => { e.preventDefault(); load(); };
+                const overlay = card.querySelector('.topic-overlay');
+                overlay.onclick = (e) => { e.stopPropagation(); playClickSound(); load(); };
                 container.appendChild(card);
             }
+            
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if(loadMoreBtn) {
+                loadMoreBtn.style.display = 'block';
+                if(topicList) {
+                    loadMoreBtn.innerText = "🌟 ¡Generar nuevos temas! 🌟";
+                    loadMoreBtn.onclick = () => { playClickSound(); generateMoreTopicsForBranch(); };
+                } else {
+                    loadMoreBtn.innerText = "🌟 ¡Ver más cosas! 🌟";
+                    loadMoreBtn.onclick = () => { playClickSound(); state.itemsToShow += 9; renderMosaics(null, 'category-mosaics'); };
+                }
+            }
         }
+
+        async function generateMoreTopicsForBranch() {
+            if(!state.currentBranch) return;
+            const btn = document.getElementById('load-more-btn');
+            btn.innerText = "✨ Pensando temas nuevos...";
+            btn.disabled = true;
+            
+            const prompt = `Genera 6 temas educativos nuevos y divertidos para niños sobre: ${state.currentBranch}. Solo dame la lista separada por comas.`;
+            try {
+                const text = await raceLLM(prompt, "Eres un asistente creativo.", false);
+                if(text) {
+                    const newTopics = text.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                    const container = document.getElementById('category-mosaics');
+                    newTopics.forEach(topic => {
+                        const img = getImageUrl(topic);
+                        const card = document.createElement('div'); 
+                        card.className = "topic-card animate-fade-in"; 
+                        card.innerHTML = `
+                            <div class="topic-image" style="background-image: url('${img}')"></div>
+                            <div class="topic-overlay">
+                                <span class="font-bold text-white text-2xl fun-font drop-shadow-md tracking-wide mb-1 leading-tight">${topic}</span>
+                                <button class="topic-btn">Ver Lección</button>
+                            </div>
+                        `;
+                        const load = () => loadLesson(topic, topic, topic, img, false);
+                        const overlay = card.querySelector('.topic-overlay');
+                        overlay.onclick = (e) => { e.stopPropagation(); playClickSound(); load(); };
+                        container.appendChild(card);
+                    });
+                }
+            } catch(e) {}
+            btn.innerText = "🌟 ¡Generar más! 🌟";
+            btn.disabled = false;
+        }
+
+        function renderBranches() {
+            const container = document.getElementById('branches-grid'); 
+            if(!container) return;
+            container.innerHTML = '';
+            BRANCHES.forEach(branch => {
+                const btn = document.createElement('div');
+                btn.className = "bg-white border-2 border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm hover:border-blue-300 transition hover:shadow-md h-32 active:scale-95";
+                btn.innerHTML = `<div class="text-4xl mb-1">${branch.icon}</div><span class="font-bold text-slate-700 text-center text-sm">${branch.name}</span>`;
+                btn.onclick = () => { 
+                    playClickSound();
+                    document.getElementById('section-branches').classList.add('hidden');
+                    document.getElementById('section-explore').classList.remove('hidden');
+                    document.getElementById('clear-filter-container').classList.remove('hidden');
+                    
+                    const subtopics = BRANCH_TOPICS[branch.name] || ["General"];
+                    state.currentBranch = branch.name;
+                    renderMosaics(subtopics, 'category-mosaics');
+                    
+                    document.getElementById('subtab-explore').classList.add('text-blue-600','border-blue-600'); 
+                    document.getElementById('subtab-branches').classList.remove('text-blue-600','border-blue-600');
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        document.getElementById('clear-filter-btn').onclick = () => {
+            playClickSound();
+            document.getElementById('clear-filter-container').classList.add('hidden');
+            state.currentBranch = null;
+            state.itemsToShow = 9; 
+            document.getElementById('category-mosaics').innerHTML = '';
+            renderMosaics(null, 'category-mosaics');
+        };
+
         function renderHistory() {
             const cont = document.getElementById('learned-gallery'); if(!cont) return; cont.innerHTML = ''; if(state.history.length === 0) { cont.innerHTML = `<p class="text-slate-400 font-medium text-center col-span-full py-8 text-xl">...</p>`; return; }
             const t = i18n[state.lang];
-            state.history.forEach(item => { const card = document.createElement('div'); card.className = "bg-white border-0 rounded-2xl p-4 flex flex-col justify-between h-32 active:scale-95 transition cursor-pointer relative overflow-hidden group shadow-md"; card.innerHTML = `<div class="absolute top-0 right-0 px-3 py-1 bg-amber-400 text-white rounded-bl-xl text-xs font-bold shadow-sm">🏆 ${t.won}</div><h3 class="font-bold text-slate-700 text-lg group-hover:text-blue-600">${item.displayTopic}</h3><p class="text-xs text-slate-400 font-bold">${new Date(item.date).toLocaleDateString()}</p>`; card.onclick = () => loadLesson(item.displayTopic, item.topicEs, item.topicEn, getImageUrl(item.topicEn), false); cont.appendChild(card); });
+            state.history.forEach(item => { const card = document.createElement('div'); card.className = "bg-white border-0 rounded-2xl p-4 flex flex-col justify-between h-32 active:scale-95 transition cursor-pointer relative overflow-hidden group shadow-md"; card.innerHTML = `<div class="absolute top-0 right-0 px-3 py-1 bg-amber-400 text-white rounded-bl-xl text-xs font-bold shadow-sm">🏆 ${t.won}</div><h3 class="font-bold text-slate-700 text-lg group-hover:text-blue-600 line-clamp-2">${item.displayTopic}</h3><p class="text-xs text-slate-400 font-bold">${new Date(item.date).toLocaleDateString()}</p>`; card.onclick = () => loadLesson(item.displayTopic, item.topicEs, item.topicEn, getImageUrl(item.topicEn), false); cont.appendChild(card); });
         }
+
+        function renderMenuHistory() {
+            const list = document.getElementById('menu-history-list');
+            if(!list) return;
+            list.innerHTML = '';
+            state.history.slice(0, 8).forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 p-2 rounded-lg text-sm font-bold text-slate-600 truncate cursor-pointer hover:bg-slate-100";
+                div.textContent = item.displayTopic;
+                div.onclick = () => {
+                    playClickSound();
+                    document.getElementById('side-menu-overlay').classList.remove('open');
+                    loadLesson(item.displayTopic, item.topicEs, item.topicEn, getImageUrl(item.topicEn), false);
+                };
+                list.appendChild(div);
+            });
+            const trophyList = document.getElementById('menu-trophies-list');
+            if(trophyList) {
+                trophyList.innerHTML = '';
+                const totalTrophies = state.history.length;
+                for(let i=0; i<Math.min(totalTrophies, 8); i++) {
+                    const t = document.createElement('div');
+                    t.className = "bg-amber-100 rounded-lg aspect-square flex items-center justify-center text-xl shadow-sm border border-amber-200";
+                    t.innerText = "🏆";
+                    trophyList.appendChild(t);
+                }
+            }
+        }
+
         function renderQuizHistory() {
             const list = document.getElementById('quiz-history-list'); if(!list) return; list.innerHTML = ''; const t = i18n[state.lang];
             if(state.quizHistory.length === 0) { list.innerHTML = `<p>${t.noQuizHistory}</p>`; return; }
             state.quizHistory.forEach(q => { const div = document.createElement('div'); div.className = 'quiz-history-item p-3 mb-2 bg-slate-50 rounded-xl flex justify-between'; div.innerHTML = `<div><p class="font-bold text-slate-700">${q.topic}</p><p class="text-xs text-slate-400">${new Date(q.date).toLocaleDateString()}</p></div><div class="font-bold text-green-600 text-lg">+${q.score}</div>`; list.appendChild(div); });
         }
+        
         function renderSearchHistory() {
-            const container = document.getElementById('search-history-container'); const tagsDiv = document.getElementById('search-history-tags'); if(!tagsDiv) return; tagsDiv.innerHTML = '';
-            if(state.searchHistory.length > 0) { container.classList.remove('hidden'); const recent = [...new Set(state.searchHistory)].slice(0, 5); recent.forEach(term => { const tag = document.createElement('span'); tag.className = "search-tag"; tag.textContent = term; tag.onclick = () => { document.getElementById('topic-search').value = term; document.getElementById('search-btn').click(); }; tagsDiv.appendChild(tag); }); } else { container.classList.add('hidden'); }
+            const container = document.getElementById('search-history-container'); 
+            const tagsDiv = document.getElementById('search-history-tags'); 
+            if(!tagsDiv) return; 
+            tagsDiv.innerHTML = '';
+            
+            if(state.searchHistory.length > 0) { 
+                container.classList.remove('hidden'); 
+                const recent = [...new Set(state.searchHistory)].slice(0, 5); 
+                recent.forEach(term => { 
+                    const wrapper = document.createElement('span'); 
+                    wrapper.className = "search-tag";
+                    
+                    const text = document.createElement('span');
+                    text.textContent = term;
+                    text.onclick = () => { playClickSound(); document.getElementById('topic-search').value = term; document.getElementById('search-btn').click(); };
+                    
+                    const delBtn = document.createElement('span');
+                    delBtn.innerHTML = "×";
+                    delBtn.className = "tag-delete";
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        playClickSound();
+                        state.searchHistory = state.searchHistory.filter(t => t !== term);
+                        localStorage.setItem('searchHist', JSON.stringify(state.searchHistory));
+                        renderSearchHistory();
+                    };
+
+                    wrapper.appendChild(text);
+                    wrapper.appendChild(delBtn);
+                    tagsDiv.appendChild(wrapper); 
+                }); 
+            } else { 
+                container.classList.add('hidden'); 
+            }
         }
 
-        // --- SISTEMA TRIPLE LLM (GEMINI + OPENAI + GROK) ---
         async function fetchGeminiLLM(messagesOrPrompt, system, jsonMode=false) {
             try {
                 const conf = jsonMode ? {responseMimeType: "application/json"} : {};
                 let contents = [];
-                // Adaptar si viene array de mensajes (memoria) o solo prompt
                 if(Array.isArray(messagesOrPrompt)) {
                     contents = messagesOrPrompt.map(m => ({role: m.role === 'user' ? 'user' : 'model', parts: [{text: m.content}]}));
                 } else {
                     contents = [{parts:[{text: messagesOrPrompt}]}];
                 }
-                
                 const res = await fetch(geminiApiUrl, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: contents, systemInstruction: {parts:[{text:system}]}, generationConfig: conf }) });
                 if(!res.ok) throw new Error("Gemini Fail");
                 const d = await res.json();
@@ -548,7 +911,6 @@
                 } else {
                     messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
                 }
-
                 const res = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
@@ -572,7 +934,6 @@
                 } else {
                     messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
                 }
-
                 const res = await fetch("https://api.x.ai/v1/chat/completions", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${xaiApiKey}` },
@@ -606,11 +967,14 @@
             if(!geminiApiKey) { alert("¡Falta la API KEY!"); return; }
             const t = i18n[state.lang];
             
+            document.getElementById('topic-search').value = "";
+            
             sessionStorage.setItem('currentLesson', JSON.stringify({displayTopic, topicEs, topicEn, imgUrl, isMagicMode}));
 
             if(!state.searchHistory.includes(displayTopic)) { state.searchHistory.unshift(displayTopic); localStorage.setItem('searchHist', JSON.stringify(state.searchHistory)); renderSearchHistory(); }
             
             document.getElementById('main-header').classList.add('hidden'); 
+            document.getElementById('main-tabs').classList.add('hidden');
             document.getElementById('discoveryContainer').style.display = 'none'; 
             document.getElementById('lessonDetailContainer').style.display = 'block'; 
             
@@ -638,13 +1002,15 @@
         }
         function renderLessonContent(data) {
             document.getElementById('lesson-loader').classList.add('hidden'); document.getElementById('lesson-content-wrapper').classList.remove('hidden'); document.getElementById('lesson-content').innerHTML = data.lesson;
+            document.getElementById('read-for-me-btn').onclick = () => { playClickSound(); speak(data.lesson); };
+            
             const qList = document.getElementById('lesson-questions-list'); qList.innerHTML = '';
             if(data.questions) { data.questions.forEach((item, idx) => { const qContainer = document.createElement('div'); qContainer.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"; let optionsHtml = ''; item.options.forEach((opt, optIdx) => { optionsHtml += `<div class="quiz-option mt-2" onclick="checkLessonAnswer(this, ${optIdx === item.correct}, '${opt}')">${opt}</div>`; }); qContainer.innerHTML = `<div class="flex justify-between items-center mb-3"><p class="font-bold text-lg text-slate-800">❓ ${item.q}</p><button class="text-blue-400 hover:text-blue-600 text-xl" onclick="speak('${item.q}')">🔊</button></div><div class="mt-2 space-y-2">${optionsHtml}</div>`; qList.appendChild(qContainer); }); }
             const subList = document.getElementById('subcategories-list'); subList.innerHTML = '';
             if (data.related) { data.related.forEach(tag => { const btn = document.createElement('button'); btn.className = "bg-white border-2 border-slate-200 text-slate-600 px-6 py-3 rounded-2xl font-bold hover:border-blue-400 hover:text-blue-600 hover:shadow-md transition text-lg relative z-20 cursor-pointer"; btn.textContent = tag; btn.onclick = () => loadLesson(tag, tag, tag, getImageUrl(tag), false); subList.appendChild(btn); }); }
         }
         document.getElementById('generate-button').onclick = () => { if(state.currentLesson) loadLesson(state.currentLesson.displayTopic, state.currentLesson.topicEs, state.currentLesson.topicEn, state.currentLesson.imgUrl, true); };
-        window.checkLessonAnswer = function(el, isCorrect, text) { const t = i18n[state.lang]; if(el.classList.contains('correct') || el.classList.contains('wrong')) return; if(isCorrect) { el.classList.add('correct'); speak(t.correct); } else { el.classList.add('wrong'); speak(t.tryAgain); } };
+        window.checkLessonAnswer = function(el, isCorrect, text) { const t = i18n[state.lang]; if(el.classList.contains('correct') || el.classList.contains('wrong')) return; if(isCorrect) { el.classList.add('correct'); playCorrectSound(); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } else { el.classList.add('wrong'); playWrongSound(); } };
 
         let currentQuizScore = 0;
         async function startRandomQuiz() {
@@ -652,6 +1018,7 @@
             const t = i18n[state.lang];
             
             document.getElementById('main-header').classList.add('hidden');
+            document.getElementById('main-tabs').classList.add('hidden');
             document.getElementById('quiz-placeholder').classList.add('hidden'); document.getElementById('quiz-container').classList.remove('hidden'); document.getElementById('quiz-result').classList.add('hidden'); document.getElementById('finish-quiz-btn').classList.add('hidden'); document.getElementById('quiz-topic-title').innerText = t.loading; document.getElementById('quiz-questions-list').innerHTML = `<div class="text-center py-10"><div class="text-6xl animate-spin">🧠</div></div>`;
             const sys = `Eres un profesor evaluador amable para niños pequeños de 4 a 10 años. Genera preguntas MUY sencillas, claras y divertidas. Usa emojis. Idioma: ${state.lang === 'es' ? 'Español' : 'Inglés'}. JSON FORMAT: { "questions": [{"q":"...","options":["A","B","C"],"correct":0}, {"q":"...","options":["..."],"correct":1}, {"q":"...","options":["..."],"correct":2}] }`;
             const prompt = `Genera un examen muy sencillo de 3 preguntas sobre: ${topic}.`;
@@ -664,25 +1031,28 @@
         }
         window.exitQuiz = function() { 
             document.getElementById('quiz-container').classList.add('hidden'); document.getElementById('quiz-placeholder').classList.remove('hidden'); window.speechSynthesis.cancel(); renderQuizHistory(); 
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('main-tabs').classList.remove('hidden');
         };
         function renderQuizQuestions(questions) {
             const qList = document.getElementById('quiz-questions-list'); qList.innerHTML = ''; currentQuizScore = 0; const t = i18n[state.lang];
             questions.forEach((item, idx) => { const qContainer = document.createElement('div'); qContainer.className = "bg-slate-50 p-6 rounded-2xl border-2 border-slate-200"; let optionsHtml = ''; item.options.forEach((opt, optIdx) => { optionsHtml += `<div class="quiz-option mt-2" data-idx="${idx}" onclick="checkQuizAnswer(this, ${optIdx === item.correct})">${opt}</div>`; }); qContainer.innerHTML = `<div class="flex justify-between items-center mb-3"><p class="font-bold text-xl text-slate-800">${t.question} ${idx+1}: ${item.q}</p><button class="text-blue-400 hover:text-blue-600 text-xl" onclick="speak('${item.q}')">🔊</button></div><div class="space-y-3">${optionsHtml}</div>`; qList.appendChild(qContainer); }); document.getElementById('finish-quiz-btn').classList.remove('hidden');
         }
-        window.checkQuizAnswer = function(el, isCorrect) { if(el.parentElement.querySelector('.correct') || el.parentElement.querySelector('.wrong')) return; if(isCorrect) { el.classList.add('correct'); currentQuizScore += 10; } else { el.classList.add('wrong'); } };
+        window.checkQuizAnswer = function(el, isCorrect) { if(el.parentElement.querySelector('.correct') || el.parentElement.querySelector('.wrong')) return; if(isCorrect) { el.classList.add('correct'); currentQuizScore += 10; playCorrectSound(); } else { el.classList.add('wrong'); playWrongSound(); } };
         document.getElementById('finish-quiz-btn').onclick = () => {
+            playWinSound(); confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
             const resultDiv = document.getElementById('quiz-result'); resultDiv.classList.remove('hidden'); document.getElementById('quiz-score-text').innerText = `+${currentQuizScore} ${i18n[state.lang].points}`; document.getElementById('finish-quiz-btn').classList.add('hidden');
             addPoints(currentQuizScore); state.quizHistory.unshift({ topic: state.currentQuizTopic || "Prueba Sorpresa", score: currentQuizScore, date: new Date().toISOString() }); localStorage.setItem('quizHist', JSON.stringify(state.quizHistory));
         };
 
         document.getElementById('start-random-quiz').onclick = startRandomQuiz;
-        document.getElementById('complete-button').onclick = function() { addPoints(50); this.disabled = true; this.innerHTML = "🏆"; this.className = "flex-[2] bg-slate-300 text-slate-500 py-5 text-xl font-bold rounded-2xl cursor-default"; state.history.unshift({ displayTopic: state.currentLesson.displayTopic, topicEs: state.currentLesson.topicEs, topicEn: state.currentLesson.topicEn, date: new Date().toISOString() }); localStorage.setItem('hist', JSON.stringify(state.history)); };
+        document.getElementById('complete-button').onclick = function() { 
+            playWinSound(); confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+            addPoints(50); this.disabled = true; this.innerHTML = "🏆"; this.className = "flex-[2] bg-slate-300 text-slate-500 py-5 text-xl font-bold rounded-2xl cursor-default"; state.history.unshift({ displayTopic: state.currentLesson.displayTopic, topicEs: state.currentLesson.topicEs, topicEn: state.currentLesson.topicEn, date: new Date().toISOString() }); localStorage.setItem('hist', JSON.stringify(state.history)); 
+        };
         function addPoints(pts) { state.points += pts; localStorage.setItem('pts', state.points); updateUI(); }
 
-        // --- SISTEMA DE AUDIO MULTI-API (MURF, OPENAI, GEMINI) ---
-        
         async function fetchMurfAudio(text) {
-            // IDs de Murf para voces femeninas en MX y US
             const voiceId = state.lang === 'es' ? 'es-MX-Valeria' : 'en-US-Natalie';
             try {
                 const res = await fetch("https://api.murf.ai/v1/speech/generate", {
@@ -716,7 +1086,7 @@
                     body: JSON.stringify({
                         model: "tts-1",
                         input: text,
-                        voice: "nova" // Voz femenina
+                        voice: "nova" 
                     })
                 });
                 if(!res.ok) throw new Error("OpenAI TTS Fail");
@@ -751,24 +1121,38 @@
             }
         }
         
-        // --- VOZ INSTANTANEA CON PRIORIDAD DE CALIDAD (6s timeout) ---
+        // --- AUDIO Y MUSICA DE FONDO ---
+        function duckMusic(lower) {
+            const bg = document.getElementById('bg-music');
+            if(bg) bg.volume = lower ? 0.02 : 0.1;
+        }
+
         window.speak = async function(text) {
             const t = i18n[state.lang];
-            if(!text) return;
+            if(!text || state.audioLoading) return;
+            
+            state.audioLoading = true;
+            duckMusic(true);
+            
             const cleanText = stripEmojis(text);
             
             window.speechSynthesis.cancel(); 
             if(state.audioSource) state.audioSource.pause();
             
             const player = document.getElementById('sticky-audio-player'); 
+            const robi = document.getElementById('assistant-btn');
+            
             player.classList.add('visible'); 
+            if(window.innerWidth < 768) {
+                robi.classList.add('move-up');
+            }
+
             document.getElementById('player-status').innerText = t.thinking; 
             document.getElementById('player-play-pause').innerText = "⏳";
             
             let url = state.audioCache.get(cleanText.substring(0,20));
 
             if (!url && geminiApiKey) {
-                // CARRERA: Murf vs OpenAI vs Gemini
                 const promises = [
                     fetchMurfAudio(cleanText),
                     fetchOpenAIAudio(cleanText),
@@ -787,16 +1171,20 @@
                         state.audioCache.set(cleanText.substring(0,20), url);
                     }
                 } catch (e) {
-                    // Fallback a voz nativa femenina
                     const u = new SpeechSynthesisUtterance(cleanText); 
                     u.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
                     const voices = window.speechSynthesis.getVoices();
                     const femaleVoice = voices.find(v => v.lang.includes(state.lang === 'es' ? 'es' : 'en') && (v.name.includes('Google') || v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Samantha')));
                     if(femaleVoice) u.voice = femaleVoice;
+                    
+                    u.onend = () => {
+                        state.audioLoading = false;
+                        duckMusic(false);
+                        document.getElementById('player-play-pause').innerText = "▶";
+                    };
 
                     window.speechSynthesis.speak(u); 
                     document.getElementById('player-status').innerText = t.voiceBasic; 
-                    document.getElementById('player-play-pause').innerText = "▶";
                     return;
                 }
             }
@@ -807,18 +1195,45 @@
                 audio.play().catch(e=>console.log("Audio play error", e)); 
                 document.getElementById('player-status').innerText = cleanText.substring(0, 30) + "..."; 
                 document.getElementById('player-play-pause').innerText = "⏸"; 
-                audio.onended = () => document.getElementById('player-play-pause').innerText = "▶"; 
+                
+                audio.onended = () => {
+                    state.audioLoading = false;
+                    duckMusic(false);
+                    document.getElementById('player-play-pause').innerText = "▶"; 
+                };
             }
         };
 
         document.getElementById('player-play-pause').onclick = () => { if(state.audioSource) { if(state.audioSource.paused) state.audioSource.play(); else state.audioSource.pause(); } };
-        document.getElementById('player-close').onclick = () => { if(state.audioSource) state.audioSource.pause(); document.getElementById('sticky-audio-player').classList.remove('visible'); };
+        document.getElementById('player-close').onclick = () => { 
+            if(state.audioSource) state.audioSource.pause(); 
+            document.getElementById('sticky-audio-player').classList.remove('visible'); 
+            document.getElementById('assistant-btn').classList.remove('move-up');
+            state.audioLoading = false;
+            duckMusic(false);
+        };
 
         const chatOverlay = document.getElementById('chat-overlay');
-        document.getElementById('assistant-btn').onclick = () => chatOverlay.classList.add('open');
-        document.getElementById('close-chat').onclick = () => chatOverlay.classList.remove('open');
-        document.getElementById('minimize-chat').onclick = () => chatOverlay.classList.remove('open');
+        document.getElementById('assistant-btn').onclick = () => { playClickSound(); chatOverlay.classList.add('open'); };
+        document.getElementById('close-chat').onclick = () => { playClickSound(); chatOverlay.classList.remove('open'); };
+        document.getElementById('minimize-chat').onclick = () => { playClickSound(); chatOverlay.classList.remove('open'); };
         
+        // SIDE MENU LOGIC
+        document.getElementById('menu-btn').onclick = () => { playClickSound(); document.getElementById('side-menu-overlay').classList.add('open'); };
+        document.getElementById('home-btn').onclick = () => {
+            playClickSound();
+            document.getElementById('lessonDetailContainer').style.display = 'none';
+            document.getElementById('discoveryContainer').style.display = 'block';
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('main-tabs').classList.remove('hidden');
+            document.getElementById('tab-lesson').click();
+            
+            const bg = document.getElementById('bg-music');
+            if(bg && bg.paused) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+            
+            window.scrollTo(0,0);
+        };
+
         function renderChatHistory() {
             const box = document.getElementById('chat-messages'); box.innerHTML = ''; const t = i18n[state.lang];
             if(state.chatHistory.length === 0) { box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-5 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-200 max-w-[85%] text-slate-700 font-medium leading-relaxed"><p>${t.greeting}</p></div></div>`; }
@@ -829,67 +1244,72 @@
             const inp = document.getElementById('chat-input'); const txt = forcedText || inp.value.trim(); if(!txt) return; if(!forcedText) inp.value = '';
             const box = document.getElementById('chat-messages'); 
             
-            // Add user message
             state.chatHistory.push({role:'user', text:txt}); localStorage.setItem('chatHist', JSON.stringify(state.chatHistory));
             box.innerHTML += `<div class="flex justify-end"><div class="bg-blue-600 text-white p-4 rounded-3xl rounded-tr-none shadow-sm text-lg">${txt}</div></div>`; box.scrollTop = box.scrollHeight;
             
             const sys = `Eres Robi, tutor para niños (4-10 años). Sé BREVE. NO SALUDES si no te saludan. Idioma: ${state.lang==='es'?'Español':'Inglés'}.`;
-            
-            // CONSTRUIR CONTEXTO (MEMORIA)
             const recentHistory = state.chatHistory.slice(-10).map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'assistant', // 'assistant' para OpenAI, 'model' para Gemini (adapter handle it)
+                role: msg.role === 'user' ? 'user' : 'assistant', 
                 content: msg.text
             }));
 
             try {
-                // Enviar historial completo
                 const ans = await raceLLM(recentHistory, sys, false);
-                
                 if(!ans) throw new Error("No response");
                 state.chatHistory.push({role:'model', text:ans}); localStorage.setItem('chatHist', JSON.stringify(state.chatHistory));
                 box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-4 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-100">${ans}</div></div>`; box.scrollTop = box.scrollHeight; speak(ans);
             } catch(e) {}
         }
-        document.getElementById('send-chat').onclick = () => handleChat();
+        document.getElementById('send-chat').onclick = () => { playClickSound(); handleChat(); };
         document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') handleChat(); };
         
         // CHAT VOICE
         const voiceBtn = document.getElementById('voice-chat-btn');
         if ('webkitSpeechRecognition' in window) {
             const r = new webkitSpeechRecognition(); r.continuous=false; r.interimResults=false;
-            voiceBtn.onclick = () => { r.lang = state.lang==='es'?'es-MX':'en-US'; r.start(); voiceBtn.classList.add('bg-red-500','text-white'); };
-            r.onresult = (e) => { voiceBtn.classList.remove('bg-red-500','text-white'); handleChat(e.results[0][0].transcript); };
+            voiceBtn.onclick = () => { playClickSound(); r.lang = state.lang==='es'?'es-MX':'en-US'; r.start(); voiceBtn.classList.add('bg-red-500','text-white'); duckMusic(true); };
+            r.onresult = (e) => { 
+                voiceBtn.classList.remove('bg-red-500','text-white'); 
+                handleChat(e.results[0][0].transcript); 
+                duckMusic(false);
+            };
+            r.onend = () => { voiceBtn.classList.remove('bg-red-500','text-white'); duckMusic(false); }
         } else { voiceBtn.style.display='none'; }
         
         // --- ARREGLO DEL BUSCADOR DE VOZ (GLOBAL) ---
         const initSearchVoice = (e) => {
              if(e) { e.preventDefault(); e.stopPropagation(); }
+             playClickSound();
              const btn = document.getElementById('search-mic-btn');
              if (!('webkitSpeechRecognition' in window)) { alert("Tu navegador no soporta búsqueda por voz"); return; }
              const rSearch = new webkitSpeechRecognition(); 
              rSearch.continuous = false; rSearch.interimResults = false;
              rSearch.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
-             try { rSearch.start(); btn.classList.add('text-red-500', 'scale-125', 'animate-pulse'); } catch(err) { console.log("Voice err", err); }
+             try { 
+                 rSearch.start(); 
+                 btn.classList.add('text-red-500', 'scale-125', 'animate-pulse');
+                 duckMusic(true);
+             } catch(err) { console.log("Voice err", err); }
+             
              rSearch.onresult = (event) => { 
                 const transcript = event.results[0][0].transcript; 
                 document.getElementById('topic-search').value = transcript; 
                 btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); 
                 document.getElementById('topic-search').focus();
              };
-             rSearch.onerror = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); };
-             rSearch.onend = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); };
+             rSearch.onerror = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); duckMusic(false); };
+             rSearch.onend = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); duckMusic(false); };
         };
 
         const micBtn = document.getElementById('search-mic-btn');
         if(micBtn) { micBtn.addEventListener('touchstart', initSearchVoice, {passive: false}); micBtn.addEventListener('click', initSearchVoice); }
 
-        function toggleLangIntro() { state.lang = state.lang==='es'?'en':'es'; localStorage.setItem('appLang', state.lang); updateUI(); }
+        function toggleLangIntro() { playClickSound(); state.lang = state.lang==='es'?'en':'es'; localStorage.setItem('appLang', state.lang); updateUI(); }
         
         function startApp() {
              try {
                 document.getElementById('global-loader').style.display = 'none';
                 
-                // RESTAURAR SESIÓN SI EXISTE (SOLUCION REINICIO MÓVIL)
                 const savedLesson = sessionStorage.getItem('currentLessonData');
                 const savedContext = sessionStorage.getItem('currentLesson');
                 
@@ -902,6 +1322,7 @@
                     document.getElementById('app-container').style.opacity = '1';
                     
                     document.getElementById('main-header').classList.add('hidden'); 
+                    document.getElementById('main-tabs').classList.add('hidden');
                     document.getElementById('discoveryContainer').style.display = 'none'; 
                     document.getElementById('lessonDetailContainer').style.display = 'block';
                     
@@ -911,6 +1332,10 @@
                     renderLessonContent(data);
                     state.currentLesson = { ...data, ...ctx };
                     updateUI();
+                    
+                    const bg = document.getElementById('bg-music');
+                    if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+                    
                     return; 
                 }
 
@@ -920,6 +1345,8 @@
                     document.getElementById('app-container').style.paddingTop = '80px'; 
                     document.getElementById('app-container').style.opacity = '1'; 
                     updateUI();
+                    const bg = document.getElementById('bg-music');
+                    if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
                 } else {
                     document.getElementById('nameInputScreen').style.display = 'flex'; 
                     document.getElementById('app-container').style.display = 'none'; 
@@ -928,7 +1355,18 @@
             } catch (e) { console.log(e); }
         }
         
-        document.getElementById('nameSubmitBtn').onclick = () => { const nameInput = document.getElementById('nameInputField').value.trim(); if (nameInput) { state.userName = nameInput.split(' ')[0]; localStorage.setItem('userName', state.userName); startApp(); } };
+        document.getElementById('nameSubmitBtn').onclick = () => { 
+            playClickSound();
+            const nameInput = document.getElementById('nameInputField').value.trim(); 
+            if (nameInput) { 
+                state.userName = nameInput.split(' ')[0]; 
+                localStorage.setItem('userName', state.userName); 
+                startApp(); 
+                // Iniciar música explícitamente tras interacción
+                const bg = document.getElementById('bg-music');
+                if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+            } 
+        };
         document.getElementById('reset-user-btn').onclick = () => { localStorage.removeItem('userName'); sessionStorage.clear(); location.reload(); };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -961,26 +1399,48 @@
                 
                 if(active === 'quiz') { 
                     document.getElementById('main-header').classList.add('hidden'); 
+                    document.getElementById('main-tabs').classList.add('hidden');
                 } else if(active === 'lesson') {
                     if(document.getElementById('discoveryContainer').style.display !== 'none') {
                          document.getElementById('main-header').classList.remove('hidden'); 
+                         document.getElementById('main-tabs').classList.remove('hidden');
                     } else {
-                        document.getElementById('main-header').classList.add('hidden'); 
                     }
                 }
             };
-            document.getElementById('tab-lesson').onclick = () => switchTab('lesson'); document.getElementById('tab-quiz').onclick = () => switchTab('quiz');
-            document.getElementById('load-more-btn').onclick = () => { state.itemsToShow += 9; renderMosaics(true); };
-            document.getElementById('search-btn').onclick = () => { const v = document.getElementById('topic-search').value; if(v) loadLesson(v, v, v, getImageUrl(v), false); };
+            document.getElementById('tab-lesson').onclick = () => { playClickSound(); switchTab('lesson'); };
+            document.getElementById('tab-quiz').onclick = () => { playClickSound(); switchTab('quiz'); };
+            document.getElementById('load-more-btn').onclick = () => { playClickSound(); state.itemsToShow += 9; renderMosaics(null, 'category-mosaics'); };
+            document.getElementById('search-btn').onclick = () => { playClickSound(); const v = document.getElementById('topic-search').value; if(v) loadLesson(v, v, v, getImageUrl(v), false); };
             document.getElementById('topic-search').onkeypress = (e) => { if(e.key==='Enter') document.getElementById('search-btn').click(); };
             document.getElementById('back-button').onclick = () => { 
+                playClickSound();
                 sessionStorage.removeItem('currentLessonData'); 
                 document.getElementById('lessonDetailContainer').style.display = 'none'; document.getElementById('discoveryContainer').style.display = 'block'; 
                 document.getElementById('main-header').classList.remove('hidden'); document.getElementById('main-tabs').classList.remove('hidden');
-                window.speechSynthesis.cancel(); if(state.audioSource) state.audioSource.pause(); document.getElementById('sticky-audio-player').classList.remove('visible'); window.scrollTo(0,0); 
+                window.speechSynthesis.cancel(); if(state.audioSource) state.audioSource.pause(); document.getElementById('sticky-audio-player').classList.remove('visible'); 
+                document.getElementById('assistant-btn').classList.remove('move-up');
+                duckMusic(false);
+                window.scrollTo(0,0); 
             };
-            document.getElementById('subtab-explore').onclick = (e) => { document.getElementById('section-explore').classList.remove('hidden'); document.getElementById('section-trophies').classList.add('hidden'); e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-trophies').classList.remove('text-blue-600','border-blue-600'); };
-            document.getElementById('subtab-trophies').onclick = (e) => { document.getElementById('section-explore').classList.add('hidden'); document.getElementById('section-trophies').classList.remove('hidden'); e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-explore').classList.remove('text-blue-600','border-blue-600'); renderHistory(); };
+            document.getElementById('subtab-explore').onclick = (e) => { 
+                playClickSound();
+                document.getElementById('section-explore').classList.remove('hidden'); document.getElementById('section-trophies').classList.add('hidden'); document.getElementById('section-branches').classList.add('hidden');
+                e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-trophies').classList.remove('text-blue-600','border-blue-600'); document.getElementById('subtab-branches').classList.remove('text-blue-600','border-blue-600');
+                renderMosaics(null, 'category-mosaics'); 
+                document.getElementById('load-more-btn').style.display = 'block';
+                document.getElementById('clear-filter-container').classList.add('hidden');
+            };
+            document.getElementById('subtab-branches').onclick = (e) => { 
+                playClickSound();
+                document.getElementById('section-explore').classList.add('hidden'); document.getElementById('section-trophies').classList.add('hidden'); document.getElementById('section-branches').classList.remove('hidden');
+                e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-trophies').classList.remove('text-blue-600','border-blue-600'); document.getElementById('subtab-explore').classList.remove('text-blue-600','border-blue-600');
+            };
+            document.getElementById('subtab-trophies').onclick = (e) => { 
+                playClickSound();
+                document.getElementById('section-explore').classList.add('hidden'); document.getElementById('section-trophies').classList.remove('hidden'); document.getElementById('section-branches').classList.add('hidden');
+                e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-explore').classList.remove('text-blue-600','border-blue-600'); document.getElementById('subtab-branches').classList.remove('text-blue-600','border-blue-600'); renderHistory(); 
+            };
         });
     </script>
 </body>
