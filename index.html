@@ -6,7 +6,6 @@
     <title>Clase Mágica de Mikhail</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-    <!-- Librería de Confeti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -249,7 +248,7 @@
         <h2 class="text-2xl font-bold text-blue-600 mt-6 fun-font" data-i18n="preparing">Preparando tu estudio...</h2>
     </div>
 
-    <!-- PANTALLA NOMBRE (Centrado Absoluto Mejorado) -->
+    <!-- PANTALLA NOMBRE -->
     <div id="nameInputScreen" class="fixed inset-0 w-full h-full" style="display: flex; background: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; z-index: 6000;">
         <div class="absolute top-0 right-0 p-4">
             <button id="lang-toggle-intro" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30" onclick="playClickSound()">
@@ -305,6 +304,8 @@
                     </div>
                 </button>
                 <div class="flex gap-3 items-center">
+                    <!-- BOTON DE MUSICA -->
+                    <button id="music-btn" class="text-xl bg-white p-2 rounded-full border border-slate-200 shadow-sm active:bg-blue-50 transition cursor-pointer" onclick="toggleMusic()">🎵</button>
                     <button id="home-btn" class="text-2xl bg-white p-2 rounded-full border border-slate-200 shadow-sm active:bg-blue-50 transition cursor-pointer" onclick="playClickSound()">🏠</button>
                     <button id="lang-toggle" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30" onclick="playClickSound()">
                         <img id="lang-flag-img" src="https://flagcdn.com/w40/mx.png" alt="MX" class="flag-icon" style="width: 24px; height: 18px;">
@@ -501,9 +502,9 @@
         </div>
     </div>
 
-    <!-- MUSICA DE FONDO (Loop) -->
+    <!-- MUSICA DE FONDO (URL ESTABLE DE ARCHIVO MP3) -->
     <audio id="bg-music" loop>
-        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a7346b.mp3" type="audio/mpeg">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
     </audio>
 
     <button id="assistant-btn" onclick="playClickSound()"></button>
@@ -536,13 +537,6 @@
     </div>
 
     <script type="module">
-        const geminiApiKey = "AIzaSyBAEs1h3AaqoUTP7O36j0Ce992klTnTNYg"; 
-        const openAiApiKey = "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";
-        const xaiApiKey = "xai-mIqGxlPmsdVc6U1hJWbW7IUfpWIuwPxTOUlRQ0dEvQpXatIqRksxM3TUnGcFCPRwRbcxQ5Id7EoaqHbf";
-        const murfApiKey = "ap2_80cff77b-d30b-4070-b68a-5b83755ee202";
-        
-        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
-        const geminiTtsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiApiKey}`;
         const robiIconUrl = "https://image.pollinations.ai/prompt/cute%203d%20avatar%20young%20female%20teacher%20low%20ponytail%20black%20hair%20black%20glasses%20friendly%20icon%20soft%20lighting?width=150&height=150&nologo=true";
 
         const BRANCHES = [
@@ -638,6 +632,21 @@
         function playWinSound() { document.getElementById('sfx-win').play().catch(()=>{}); }
         function playCorrectSound() { document.getElementById('sfx-correct').play().catch(()=>{}); }
         function playWrongSound() { document.getElementById('sfx-wrong').play().catch(()=>{}); }
+        
+        function toggleMusic() {
+            const bg = document.getElementById('bg-music');
+            const btn = document.getElementById('music-btn');
+            if(bg.paused) {
+                bg.volume = 0.05; // VOLUMEN AL 5%
+                bg.play().catch(()=>{});
+                btn.innerText = "🎵";
+                btn.style.opacity = "1";
+            } else {
+                bg.pause();
+                btn.innerText = "🔇";
+                btn.style.opacity = "0.5";
+            }
+        }
 
         function updateUI() {
             const t = i18n[state.lang];
@@ -750,7 +759,15 @@
             
             const prompt = `Genera 6 temas educativos nuevos y divertidos para niños sobre: ${state.currentBranch}. Solo dame la lista separada por comas.`;
             try {
-                const text = await raceLLM(prompt, "Eres un asistente creativo.", false);
+                const data = await fetch('/api/chat', {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        messages: [{role: 'user', content: prompt}], 
+                        system: "Eres un asistente creativo."
+                    })
+                }).then(res => res.json());
+
+                const text = data.result;
                 if(text) {
                     const newTopics = text.split(',').map(t => t.trim()).filter(t => t.length > 0);
                     const container = document.getElementById('category-mosaics');
@@ -887,84 +904,7 @@
             }
         }
 
-        async function fetchGeminiLLM(messagesOrPrompt, system, jsonMode=false) {
-            try {
-                const conf = jsonMode ? {responseMimeType: "application/json"} : {};
-                let contents = [];
-                if(Array.isArray(messagesOrPrompt)) {
-                    contents = messagesOrPrompt.map(m => ({role: m.role === 'user' ? 'user' : 'model', parts: [{text: m.content}]}));
-                } else {
-                    contents = [{parts:[{text: messagesOrPrompt}]}];
-                }
-                const res = await fetch(geminiApiUrl, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: contents, systemInstruction: {parts:[{text:system}]}, generationConfig: conf }) });
-                if(!res.ok) throw new Error("Gemini Fail");
-                const d = await res.json();
-                return d.candidates[0].content.parts[0].text;
-            } catch(e) { throw e; }
-        }
-
-        async function fetchOpenAI(messagesOrPrompt, system, jsonMode=false) {
-            try {
-                let messages = [];
-                if(Array.isArray(messagesOrPrompt)) {
-                    messages = [{role: "system", content: system}, ...messagesOrPrompt];
-                } else {
-                    messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
-                }
-                const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
-                    body: JSON.stringify({
-                        model: "gpt-4o-mini",
-                        messages: messages,
-                        response_format: jsonMode ? { type: "json_object" } : { type: "text" }
-                    })
-                });
-                if(!res.ok) throw new Error("OpenAI Fail");
-                const d = await res.json();
-                return d.choices[0].message.content;
-            } catch(e) { throw e; }
-        }
-
-        async function fetchGrok(messagesOrPrompt, system, jsonMode=false) {
-            try {
-                let messages = [];
-                if(Array.isArray(messagesOrPrompt)) {
-                    messages = [{role: "system", content: system}, ...messagesOrPrompt];
-                } else {
-                    messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
-                }
-                const res = await fetch("https://api.x.ai/v1/chat/completions", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${xaiApiKey}` },
-                    body: JSON.stringify({
-                        model: "grok-beta",
-                        messages: messages,
-                    })
-                });
-                if(!res.ok) throw new Error("Grok Fail");
-                const d = await res.json();
-                return d.choices[0].message.content;
-            } catch(e) { throw e; }
-        }
-
-        function cleanJSON(text) {
-            let clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
-            return clean;
-        }
-
-        async function raceLLM(prompt, system, jsonMode=false) {
-             return Promise.any([
-                 fetchGeminiLLM(prompt, system, jsonMode), 
-                 fetchOpenAI(prompt, system, jsonMode),
-                 fetchGrok(prompt, system, jsonMode)
-             ])
-            .then(text => jsonMode ? cleanJSON(text) : text)
-            .catch(e => { console.error("Todas las IAs fallaron", e); return null; });
-        }
-
         async function loadLesson(displayTopic, topicEs, topicEn, imgUrl, isMagicMode) {
-            if(!geminiApiKey) { alert("¡Falta la API KEY!"); return; }
             const t = i18n[state.lang];
             
             document.getElementById('topic-search').value = "";
@@ -986,17 +926,47 @@
             let promptText = `Crea una lección sobre: ${displayTopic}.`; let lengthConstraint = "Max 350 chars.";
             if(isMagicMode) { promptText = `Genera una CLASE MAESTRA EXTENSA y DETALLADA sobre: ${displayTopic}. Explica como si fueras un cuentacuentos experto.`; lengthConstraint = "Minimo 800 caracteres. Usa parrafos claros."; }
 
-            const sys = `Eres un profesor de primaria amable. Tu audiencia son niños de 4 a 10 años. Usa lenguaje muy sencillo, emojis y sé muy motivador. Responde en JSON estricto. Idioma: ${state.lang === 'es' ? 'Español' : 'Inglés'}. IMPORTANTE: 1. NO SALUDES al principio. Ve directo al contenido. 2. Dirígete al niño en singular ("tú"). 3. ${lengthConstraint} JSON FORMAT: { "lesson": "Contenido educativo...", "questions": [{"q":"...","options":["A","B","C"],"correct":0}, {"q":"...","options":["..."],"correct":1}, {"q":"...","options":["..."],"correct":2}], "related": ["Tema 1", "Tema 2", "Tema 3"] }`;
+            // PROMPT SIMPLIFICADO AL MAXIMO
+            const sys = `Eres un profesor para niños. Responde SOLO en JSON. Idioma: Español. JSON: { "lesson": "Texto...", "questions": [{"q":"...","options":["A","B"],"correct":0}], "related": ["A","B"] }`;
             
             try {
-                const text = await raceLLM(promptText, sys, true);
-                if(!text) throw new Error("No response");
-                const data = JSON.parse(text);
-                sessionStorage.setItem('currentLessonData', JSON.stringify(data));
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [{role: 'user', content: promptText}], system: sys })
+                });
                 
-                renderLessonContent(data); state.currentLesson = { ...data, displayTopic, topicEs, topicEn, imgUrl }; prefetchAudio(data.lesson); 
+                if (!response.ok) throw new Error("Backend failed");
+                const data = await response.json();
+                
+                // Parseo seguro
+                let lessonData;
+                try {
+                    lessonData = JSON.parse(data.result);
+                } catch (e) {
+                    console.warn("JSON parse failed, attempting regex cleanup");
+                    // Fallback regex extraction if plain JSON parse fails
+                    const jsonMatch = data.result.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        lessonData = JSON.parse(jsonMatch[0]);
+                    } else {
+                         throw new Error("Invalid JSON format from AI");
+                    }
+                }
+                
+                sessionStorage.setItem('currentLessonData', JSON.stringify(lessonData));
+                renderLessonContent(lessonData); 
+                state.currentLesson = { ...lessonData, displayTopic, topicEs, topicEn, imgUrl }; 
+                
+                fetch('/api/tts', {
+                     method: 'POST',
+                     body: JSON.stringify({ text: lessonData.lesson })
+                }).catch(()=>{});
+
             } catch(e) { 
-                console.error(e); document.getElementById('lesson-loader').classList.add('hidden'); document.getElementById('lesson-error-state').classList.remove('hidden');
+                console.error("Lesson Error:", e); 
+                document.getElementById('lesson-loader').classList.add('hidden'); 
+                document.getElementById('lesson-error-state').classList.remove('hidden');
                 document.getElementById('retry-lesson-btn').onclick = () => loadLesson(displayTopic, topicEs, topicEn, imgUrl, isMagicMode);
             }
         }
@@ -1023,10 +993,14 @@
             const sys = `Eres un profesor evaluador amable para niños pequeños de 4 a 10 años. Genera preguntas MUY sencillas, claras y divertidas. Usa emojis. Idioma: ${state.lang === 'es' ? 'Español' : 'Inglés'}. JSON FORMAT: { "questions": [{"q":"...","options":["A","B","C"],"correct":0}, {"q":"...","options":["..."],"correct":1}, {"q":"...","options":["..."],"correct":2}] }`;
             const prompt = `Genera un examen muy sencillo de 3 preguntas sobre: ${topic}.`;
             try {
-                const text = await raceLLM(prompt, sys, true);
-                if(!text) throw new Error("No response");
-                const data = JSON.parse(text);
-                document.getElementById('quiz-topic-title').innerText = topic; state.currentQuizTopic = topic; renderQuizQuestions(data.questions);
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [{role: 'user', content: prompt}], system: sys })
+                });
+                const data = await response.json();
+                const quizData = JSON.parse(data.result);
+                document.getElementById('quiz-topic-title').innerText = topic; state.currentQuizTopic = topic; renderQuizQuestions(quizData.questions);
             } catch(e) { console.error(e); alert("Error"); document.getElementById('tab-lesson').click(); }
         }
         window.exitQuiz = function() { 
@@ -1052,79 +1026,10 @@
         };
         function addPoints(pts) { state.points += pts; localStorage.setItem('pts', state.points); updateUI(); }
 
-        async function fetchMurfAudio(text) {
-            const voiceId = state.lang === 'es' ? 'es-MX-Valeria' : 'en-US-Natalie';
-            try {
-                const res = await fetch("https://api.murf.ai/v1/speech/generate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "api-key": murfApiKey
-                    },
-                    body: JSON.stringify({
-                        voiceId: voiceId,
-                        style: "General",
-                        text: text,
-                        rate: 0,
-                        pitch: 0,
-                        format: "MP3",
-                        channel: "MONO"
-                    })
-                });
-                if (!res.ok) throw new Error("Murf Fail");
-                const data = await res.json();
-                if (data.audioFile) return data.audioFile; 
-                throw new Error("No audio url");
-            } catch (e) { throw e; }
-        }
-
-        async function fetchOpenAIAudio(text) {
-            try {
-                const res = await fetch("https://api.openai.com/v1/audio/speech", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
-                    body: JSON.stringify({
-                        model: "tts-1",
-                        input: text,
-                        voice: "nova" 
-                    })
-                });
-                if(!res.ok) throw new Error("OpenAI TTS Fail");
-                const blob = await res.blob();
-                return URL.createObjectURL(blob);
-            } catch(e) { throw e; }
-        }
-
-        async function fetchGeminiAudio(text) {
-            try {
-                const res = await fetch(geminiTtsUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text: text}]}], generationConfig:{responseModalities:["AUDIO"], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Kore"}}}}}) }); 
-                const d = await res.json(); 
-                if(d.candidates) { 
-                    const wav = window.pcmToWav(new Int16Array(window.b64ToBuf(d.candidates[0].content.parts[0].inlineData.data))); 
-                    return URL.createObjectURL(wav); 
-                }
-                throw new Error("Gemini TTS Fail");
-            } catch(e) { throw e; }
-        }
-
-        async function prefetchAudio(text) {
-            const cleanText = stripEmojis(text);
-            if(!cleanText || state.audioCache.has(cleanText.substring(0,20))) return;
-            try {
-                const url = await fetchOpenAIAudio(cleanText);
-                state.audioCache.set(cleanText.substring(0,20), url);
-            } catch(e) {
-                try {
-                    const urlG = await fetchGeminiAudio(cleanText);
-                    state.audioCache.set(cleanText.substring(0,20), urlG);
-                } catch(err){}
-            }
-        }
-        
         // --- AUDIO Y MUSICA DE FONDO ---
         function duckMusic(lower) {
             const bg = document.getElementById('bg-music');
-            if(bg) bg.volume = lower ? 0.02 : 0.1;
+            if(bg) bg.volume = lower ? 0.02 : 0.05; // BAJO VOLUMEN BASE (0.05)
         }
 
         window.speak = async function(text) {
@@ -1150,48 +1055,21 @@
             document.getElementById('player-status').innerText = t.thinking; 
             document.getElementById('player-play-pause').innerText = "⏳";
             
-            let url = state.audioCache.get(cleanText.substring(0,20));
-
-            if (!url && geminiApiKey) {
-                const promises = [
-                    fetchMurfAudio(cleanText),
-                    fetchOpenAIAudio(cleanText),
-                    fetchGeminiAudio(cleanText)
-                ];
-
-                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve('timeout'), 6000));
-
-                try {
-                    const result = await Promise.race([Promise.any(promises), timeoutPromise]);
-                    
-                    if (result === 'timeout') {
-                        throw new Error("Timeout");
-                    } else {
-                        url = result;
-                        state.audioCache.set(cleanText.substring(0,20), url);
-                    }
-                } catch (e) {
-                    const u = new SpeechSynthesisUtterance(cleanText); 
-                    u.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
-                    const voices = window.speechSynthesis.getVoices();
-                    const femaleVoice = voices.find(v => v.lang.includes(state.lang === 'es' ? 'es' : 'en') && (v.name.includes('Google') || v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Samantha')));
-                    if(femaleVoice) u.voice = femaleVoice;
-                    
-                    u.onend = () => {
-                        state.audioLoading = false;
-                        duckMusic(false);
-                        document.getElementById('player-play-pause').innerText = "▶";
-                    };
-
-                    window.speechSynthesis.speak(u); 
-                    document.getElementById('player-status').innerText = t.voiceBasic; 
-                    return;
-                }
-            }
-            
-            if(url) { 
+            // Llamar al backend para TTS
+            try {
+                const res = await fetch('/api/tts', {
+                    method: 'POST',
+                    body: JSON.stringify({ text: cleanText })
+                });
+                
+                if (!res.ok) throw new Error("TTS Backend Fail");
+                
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                
                 const audio = new Audio(url); 
                 state.audioSource = audio; 
+                
                 audio.play().catch(e=>console.log("Audio play error", e)); 
                 document.getElementById('player-status').innerText = cleanText.substring(0, 30) + "..."; 
                 document.getElementById('player-play-pause').innerText = "⏸"; 
@@ -1201,6 +1079,21 @@
                     duckMusic(false);
                     document.getElementById('player-play-pause').innerText = "▶"; 
                 };
+
+            } catch (error) {
+                console.log("Fallback to native TTS");
+                const u = new SpeechSynthesisUtterance(cleanText); 
+                u.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
+                
+                u.onend = () => {
+                    state.audioLoading = false;
+                    duckMusic(false);
+                    document.getElementById('player-play-pause').innerText = "▶";
+                };
+
+                window.speechSynthesis.speak(u); 
+                document.getElementById('player-status').innerText = t.voiceBasic; 
+                document.getElementById('player-play-pause').innerText = "▶";
             }
         };
 
@@ -1229,7 +1122,7 @@
             document.getElementById('tab-lesson').click();
             
             const bg = document.getElementById('bg-music');
-            if(bg && bg.paused) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+            if(bg && bg.paused) { bg.volume = 0.05; bg.play().catch(()=>{}); }
             
             window.scrollTo(0,0);
         };
@@ -1248,14 +1141,16 @@
             box.innerHTML += `<div class="flex justify-end"><div class="bg-blue-600 text-white p-4 rounded-3xl rounded-tr-none shadow-sm text-lg">${txt}</div></div>`; box.scrollTop = box.scrollHeight;
             
             const sys = `Eres Robi, tutor para niños (4-10 años). Sé BREVE. NO SALUDES si no te saludan. Idioma: ${state.lang==='es'?'Español':'Inglés'}.`;
-            const recentHistory = state.chatHistory.slice(-10).map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'assistant', 
-                content: msg.text
-            }));
-
+            
             try {
-                const ans = await raceLLM(recentHistory, sys, false);
-                if(!ans) throw new Error("No response");
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [{role: 'user', content: txt}], system: sys })
+                });
+                const data = await res.json();
+                const ans = data.result;
+                
                 state.chatHistory.push({role:'model', text:ans}); localStorage.setItem('chatHist', JSON.stringify(state.chatHistory));
                 box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-4 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-100">${ans}</div></div>`; box.scrollTop = box.scrollHeight; speak(ans);
             } catch(e) {}
@@ -1334,7 +1229,7 @@
                     updateUI();
                     
                     const bg = document.getElementById('bg-music');
-                    if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+                    if(bg) { bg.volume = 0.05; bg.play().catch(()=>{}); }
                     
                     return; 
                 }
@@ -1346,7 +1241,7 @@
                     document.getElementById('app-container').style.opacity = '1'; 
                     updateUI();
                     const bg = document.getElementById('bg-music');
-                    if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+                    if(bg) { bg.volume = 0.05; bg.play().catch(()=>{}); }
                 } else {
                     document.getElementById('nameInputScreen').style.display = 'flex'; 
                     document.getElementById('app-container').style.display = 'none'; 
@@ -1362,9 +1257,8 @@
                 state.userName = nameInput.split(' ')[0]; 
                 localStorage.setItem('userName', state.userName); 
                 startApp(); 
-                // Iniciar música explícitamente tras interacción
                 const bg = document.getElementById('bg-music');
-                if(bg) { bg.volume = 0.1; bg.play().catch(()=>{}); }
+                if(bg) { bg.volume = 0.05; bg.play().catch(()=>{}); }
             } 
         };
         document.getElementById('reset-user-btn').onclick = () => { localStorage.removeItem('userName'); sessionStorage.clear(); location.reload(); };
@@ -1378,7 +1272,6 @@
                 const searchHist = localStorage.getItem('searchHist'); if(searchHist) state.searchHistory = JSON.parse(searchHist); 
                 const chatHist = localStorage.getItem('chatHist'); if(chatHist) state.chatHistory = JSON.parse(chatHist); 
                 initFacts(); renderChatHistory(); 
-                setTimeout(() => { const frases = ["¡Correcto!", "Correct!", "Intenta otra vez", "Try again"]; frases.forEach(f => prefetchAudio(f)); }, 2000);
             } catch (e) { }
             
             const langToggleMain = document.getElementById('lang-toggle'); if (langToggleMain) langToggleMain.onclick = toggleLangIntro; 
@@ -1405,6 +1298,7 @@
                          document.getElementById('main-header').classList.remove('hidden'); 
                          document.getElementById('main-tabs').classList.remove('hidden');
                     } else {
+                        // Estamos en detalle de lección
                     }
                 }
             };
