@@ -1,0 +1,14 @@
+{
+  "name": "clase-magica-mikhail",
+  "version": "1.0.0",
+  "description": "Plataforma educativa con IA",
+  "scripts": {
+    "start": "serve public"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
