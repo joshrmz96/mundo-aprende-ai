@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clase Mágica de Mikhail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        .no-select { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: linear-gradient(180deg, #f0f9ff 0%, #cce7ff 100%);
+            min-height: 100vh;
+            color: #334155;
+            overflow-x: hidden; 
+            padding-bottom: 140px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        h1, h2, h3, .fun-font { font-family: 'Fredoka', sans-serif; }
+
+        nav { 
+            z-index: 50; 
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.6);
+            position: sticky; 
+            top: 0;
+        }
+
+        .topic-card {
+            background: white;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            height: 240px;
+            border: 4px solid white;
+            z-index: 10;
+            touch-action: manipulation;
+        }
+        .topic-card:active { transform: scale(0.96); }
+        
+        .topic-image {
+            height: 100%; width: 100%;
+            background-size: cover; background-position: center;
+            pointer-events: none;
+        }
+        
+        .topic-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0) 100%);
+            padding: 20px;
+            display: flex; align-items: flex-end;
+            height: 60%; pointer-events: none;
+            border-radius: 0 0 1.8rem 1.8rem;
+        }
+
+        .fact-card {
+            background: white; border: 2px solid #fbbf24; border-radius: 1rem;
+            padding: 0.8rem; margin-bottom: 1rem;
+            box-shadow: 0 4px 0 #f59e0b; position: relative; z-index: 20;
+            transition: all 0.3s; overflow: hidden;
+        }
+        .fact-nav-btn {
+            background: #fef3c7; color: #d97706; width: 36px; height: 36px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; cursor: pointer; transition: all 0.2s; border: 1px solid #fcd34d;
+            flex-shrink: 0;
+        }
+        .fact-nav-btn:active { background: #d97706; color: white; transform: scale(0.9); }
+
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+
+        .btn-fun {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white; border-radius: 1.5rem; padding: 1rem 1.5rem;
+            font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.1rem;
+            box-shadow: 0 4px 0 #1e3a8a; transition: transform 0.1s; border: none; cursor: pointer; position: relative; z-index: 20;
+            user-select: none; -webkit-user-select: none;
+        }
+        .btn-fun:active { transform: translateY(4px); box-shadow: 0 0 0 #1e3a8a; }
+        .btn-fun:disabled { background: #94a3b8; box-shadow: none; cursor: default; transform: none; }
+
+        .btn-secondary-fun {
+            background: white; color: #475569;
+            border: 3px solid #cbd5e1; border-radius: 1.5rem; padding: 0.8rem 1.5rem; font-weight: 700;
+            transition: transform 0.2s; box-shadow: 0 4px 0 #94a3b8; cursor: pointer; position: relative; z-index: 20;
+            user-select: none; -webkit-user-select: none;
+        }
+        .btn-secondary-fun:active { transform: translateY(4px); box-shadow: 0 0 0 #94a3b8; }
+        
+        .btn-danger-fun {
+            background: #fee2e2; color: #ef4444; border: 2px solid #fecaca; border-radius: 1rem;
+            padding: 0.5rem 1rem; font-weight: 700; font-size: 0.9rem;
+            transition: all 0.2s; cursor: pointer; box-shadow: 0 3px 0 #fca5a5;
+        }
+        .btn-danger-fun:active { transform: translateY(3px); box-shadow: none; }
+
+        .btn-load-more {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53); color: white; border: none;
+            border-radius: 2rem; width: 100%; padding: 1.2rem;
+            font-weight: 700; font-family: 'Fredoka', sans-serif; font-size: 1.3rem;
+            transition: all 0.3s; cursor: pointer; margin-top: 2rem; position: relative; z-index: 20;
+            box-shadow: 0 6px 0 #d14424; text-shadow: 0 2px 2px rgba(0,0,0,0.2);
+        }
+        .btn-load-more:active { transform: translateY(4px); box-shadow: 0 2px 0 #d14424; }
+
+        .quiz-option {
+            background: white; border: 2px solid #e2e8f0; padding: 1.2rem; border-radius: 1.2rem;
+            cursor: pointer; transition: background 0.2s; font-weight: 600; color: #475569; font-size: 1.1rem;
+            touch-action: manipulation;
+        }
+        .quiz-option:active { border-color: #3b82f6; background: #eff6ff; }
+        .quiz-option.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .quiz-option.wrong { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+
+        #sticky-audio-player {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(200%);
+            width: 95%; max-width: 500px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+            border-radius: 24px; padding: 12px 20px; z-index: 2000;
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.25);
+            display: flex; align-items: center; justify-content: space-between;
+            border: 2px solid #fff; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #sticky-audio-player.visible { transform: translateX(-50%) translateY(0); }
+
+        #assistant-btn {
+            position: fixed; bottom: 25px; right: 20px; z-index: 3000;
+            width: 75px; height: 75px;
+            background-color: white; background-size: cover; background-position: center;
+            border-radius: 50%; box-shadow: 0 6px 0 #cbd5e1, 0 10px 20px rgba(0,0,0,0.15);
+            cursor: pointer; border: 3px solid #fff;
+            transition: transform 0.2s; animation: bounce-float 4s ease-in-out infinite;
+        }
+        #assistant-btn:active { transform: scale(0.9); }
+
+        .chat-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); z-index: 4000;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s; backdrop-filter: blur(4px);
+        }
+        .chat-overlay.open { opacity: 1; visibility: visible; }
+        
+        .chat-box {
+            width: 100%; max-width: 400px; height: 60vh;
+            background: white; border-radius: 32px 32px 0 0;
+            overflow: hidden; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+            display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+        }
+        @media (min-width: 768px) {
+            .chat-overlay { align-items: center; padding: 20px; }
+            .chat-box { height: 550px; border-radius: 32px; transform: scale(0.95); border: 5px solid #bfdbfe; }
+        }
+        .chat-overlay.open .chat-box { transform: translateY(0); }
+        @media (min-width: 768px) { .chat-overlay.open .chat-box { transform: scale(1); } }
+        
+        .search-tag {
+            display: inline-block; background: white; color: #64748b;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+            border: 1px solid #e2e8f0; margin-right: 6px; margin-bottom: 8px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .search-tag:active { background: #eff6ff; color: #3b82f6; border-color: #bfdbfe; }
+
+        .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .inline-speak-btn {
+            background: #dbeafe; color: #2563eb; 
+            border-radius: 50%; padding: 8px;
+            cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-left: 10px; width: 40px; height: 40px; flex-shrink: 0;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative; top: 4px;
+        }
+        
+        @keyframes bounce-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        
+        .flag-icon { width: 32px; height: 24px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="no-select">
+
+    <div id="global-loader" class="fixed inset-0" style="background: #f0f9ff; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="text-7xl animate-bounce">👩‍🏫</div>
+        <h2 class="text-2xl font-bold text-blue-600 mt-6 fun-font" data-i18n="preparing">Preparando tu estudio...</h2>
+    </div>
+
+    <div id="nameInputScreen" class="fixed inset-0" style="display: flex; background: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; z-index: 6000;">
+        <div class="absolute top-0 right-0 p-4">
+            <button id="lang-toggle-intro" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30">
+                <img id="lang-flag-img-intro" src="https://flagcdn.com/w40/mx.png" alt="MX" class="flag-icon" style="width: 24px; height: 18px;">
+                <span id="lang-text-intro" class="text-sm font-bold text-slate-700">ES</span>
+            </button>
+        </div>
+        <div class="text-9xl mb-6">✏️</div>
+        <h2 id="namePrompt" class="text-4xl font-bold text-slate-800 fun-font mb-4">¿Cuál es tu nombre?</h2>
+        <p id="nameSubtitle" class="text-slate-500 text-lg mb-8 text-center max-w-sm">Así podré ser tu tutor personal.</p>
+        <div class="w-full max-w-xs">
+            <input type="text" id="nameInputField" class="w-full p-4 rounded-xl border-4 border-blue-200 focus:border-blue-500 outline-none text-slate-700 font-bold text-xl mb-6 text-center" placeholder="Tu Nombre">
+            <button id="nameSubmitBtn" class="btn-fun w-full py-4 text-xl">¡Empezar!</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="max-w-6xl mx-auto p-4 md:p-8 opacity-0 transition-opacity duration-500 relative z-10" style="display:none;">
+        <nav class="px-4 py-3 shadow-sm fixed top-0 left-0 right-0 max-w-6xl mx-auto" style="max-width: 100%; backdrop-filter: none; background: #f0f9ff;">
+             <div class="max-w-6xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20 text-white font-bold transform -rotate-3 border-2 border-white">M</div>
+                    <div>
+                        <h1 id="app-title-display" class="text-xl font-bold text-slate-800 leading-tight fun-font" data-i18n="appTitle">Mundo [NAME]</h1>
+                        <div class="flex items-center gap-1.5 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 inline-block mt-0.5">
+                            <span class="text-amber-500 text-xs">⭐</span>
+                            <p class="text-[10px] font-bold text-amber-700" id="points-display">0 Puntos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="reset-user-btn" class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold active:bg-slate-200 cursor-pointer">Salir</button>
+                    <button id="lang-toggle" class="flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-slate-200 active:scale-95 cursor-pointer relative z-30">
+                        <img id="lang-flag-img" src="https://flagcdn.com/w40/mx.png" alt="MX" class="flag-icon" style="width: 24px; height: 18px;">
+                        <span id="lang-text" class="text-sm font-bold text-slate-700">ES</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <div id="main-header" class="text-center mb-8 mt-24 transition-all duration-300">
+            <h2 class="text-3xl md:text-6xl font-bold text-slate-800 fun-font mb-2 tracking-tight" id="welcome-greeting"></h2>
+            <p class="text-slate-500 font-medium text-lg md:text-2xl" data-i18n="subtitle">¿Qué quieres descubrir hoy?</p>
+        </div>
+
+        <div id="main-tabs" class="flex justify-center mb-10 gap-4 relative z-30 transition-all duration-300">
+            <button id="tab-lesson" data-view="lessonView" class="btn-fun shadow-blue-400 ring-4 ring-blue-50">
+                <span data-i18n="tabLessons">📚 Lecciones</span>
+            </button>
+            <button id="tab-quiz" data-view="quizView" class="btn-secondary-fun">
+                <span data-i18n="tabQuizzes">🧠 Pruebas</span>
+            </button>
+        </div>
+
+        <div id="lessonView" class="view block">
+            <div id="discoveryContainer">
+                <div class="max-w-3xl mx-auto relative z-20 mb-6">
+                    <div class="fact-card">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl bg-yellow-100 p-2 rounded-lg flex-shrink-0">💡</div>
+                            <div class="flex-grow min-w-0">
+                                <h3 class="font-bold text-amber-800 text-sm mb-0 fun-font flex justify-between items-center">
+                                    <span data-i18n="factTitle">Curiosidad:</span>
+                                    <span class="text-[10px] bg-amber-100 px-2 py-0.5 rounded text-amber-600 whitespace-nowrap" id="fact-counter">1/5</span>
+                                </h3>
+                                <div class="min-h-[24px] flex items-center">
+                                    <p id="daily-fact" class="text-amber-900 font-medium text-sm animate-fade-in leading-snug line-clamp-2" data-i18n="loading">Cargando...</p>
+                                </div>
+                            </div>
+                            <button class="ml-2 text-amber-500 hover:text-amber-700 text-lg flex-shrink-0 p-2" onclick="speak(document.getElementById('daily-fact').innerText)">🔊</button>
+                        </div>
+                        <div class="flex justify-between items-center mt-2 pt-2 border-t border-amber-100">
+                             <button id="prev-fact" class="fact-nav-btn">⬅️</button>
+                             <button id="next-fact" class="fact-nav-btn">➡️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 max-w-3xl mx-auto relative z-30">
+                    <div class="relative group transform transition hover:-translate-y-1">
+                        <input type="text" id="topic-search" class="w-full p-4 pl-16 pr-16 rounded-full border-4 border-white shadow-xl shadow-blue-100 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none text-slate-700 font-bold text-base sm:text-xl bg-white transition" placeholder="✨ Busca aquí... (ej: Dinosaurios)">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl opacity-40">🔍</span>
+                        <div id="search-mic-container" class="absolute right-20 top-0 bottom-0 flex items-center justify-center w-12 z-50">
+                            <button id="search-mic-btn" type="button" class="text-2xl text-slate-400 hover:text-blue-500 active:text-red-500 transition cursor-pointer w-full h-full flex items-center justify-center active:scale-125">🎤</button>
+                        </div>
+                        <button id="search-btn" class="absolute right-2 top-2 bottom-2 bg-blue-600 text-white px-6 rounded-full font-bold active:bg-blue-700 shadow-md transition text-sm sm:text-lg cursor-pointer z-40" data-i18n="go">Ir</button>
+                    </div>
+                    <div id="search-history-container" class="mt-4 px-2 hidden">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2" data-i18n="recent">Recientes:</p>
+                        <div id="search-history-tags"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center mb-8 gap-6 relative z-30">
+                     <button id="subtab-explore" class="text-blue-600 font-bold border-b-4 border-blue-600 pb-2 transition text-lg px-2 cursor-pointer">🚀 <span data-i18n="explore">Explorar</span></button>
+                    <button id="subtab-trophies" class="text-slate-400 font-bold border-b-4 border-transparent pb-2 active:text-slate-600 transition text-lg px-2 cursor-pointer">🏆 <span data-i18n="trophies">Trofeos</span></button>
+                </div>
+
+                <div id="section-explore">
+                    <div id="category-mosaics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative z-10"></div>
+                    <button id="load-more-btn" class="btn-load-more text-lg" data-i18n="loadMore">🌟 ¡Ver más cosas! 🌟</button>
+                </div>
+
+                <div id="section-trophies" class="hidden">
+                     <div id="learned-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10"></div>
+                </div>
+            </div>
+
+            <div id="lessonDetailContainer" class="hidden max-w-4xl mx-auto pb-24 relative z-20 mt-2">
+                <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden relative border border-slate-100">
+                    <div id="lesson-header-bg" class="h-64 sm:h-96 bg-slate-100 relative w-full group">
+                        <div class="absolute top-4 left-4 z-30">
+                            <button id="back-button" class="flex items-center text-slate-600 active:text-blue-600 transition font-bold text-base bg-white/90 backdrop-blur-md px-5 py-2 rounded-full shadow-lg border-2 border-white group cursor-pointer">
+                                <span class="group-active:-translate-x-1 transition">⬅️</span> <span data-i18n="back" class="ml-2">Volver</span>
+                            </button>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 p-6 sm:p-10 w-full z-10">
+                            <h2 id="lesson-title" class="text-4xl sm:text-6xl text-white font-bold fun-font drop-shadow-xl mb-2 leading-tight">...</h2>
+                        </div>
+                        <button class="absolute bottom-6 right-6 bg-white/20 backdrop-blur-md border-2 border-white/50 text-white p-4 rounded-full shadow-xl active:scale-95 transition z-20 cursor-pointer" onclick="speak(document.getElementById('lesson-title').innerText)">🔊</button>
+                    </div>
+                    
+                    <div class="p-6 sm:p-14">
+                        <div id="lesson-loader" class="hidden text-center py-24">
+                            <div class="text-8xl animate-bounce mb-8">✨</div>
+                            <p class="text-slate-700 font-bold text-2xl fun-font animate-pulse" data-i18n="preparingLesson">Robi está preparando la clase...</p>
+                        </div>
+
+                        <div id="lesson-error-state" class="hidden text-center py-12">
+                             <div class="text-6xl mb-4">🙈</div>
+                             <h3 class="text-xl font-bold text-slate-700 mb-2" data-i18n="errorTitle">¡Ups! Se nos cayó la tiza</h3>
+                             <button id="retry-lesson-btn" class="btn-fun" data-i18n="retry">Intentar de nuevo</button>
+                        </div>
+
+                        <div id="lesson-content-wrapper" class="hidden animate-fade-in">
+                            <div class="bg-blue-50/50 p-6 sm:p-10 rounded-[2rem] mb-10 border-2 border-blue-100">
+                                <div class="prose max-w-none text-slate-700 leading-loose text-xl sm:text-2xl font-medium">
+                                    <div id="lesson-content" class="inline">...</div>
+                                    <button class="inline-speak-btn bg-white" onclick="speak(document.getElementById('lesson-content').innerText)">🔊</button>
+                                </div>
+                            </div>
+                            <div id="lesson-questions-section" class="mb-10">
+                                <h3 class="text-xl sm:text-2xl font-bold text-slate-800 fun-font mb-6 flex items-center gap-2"><span>🧩</span> <span data-i18n="letsPractice">¡Practiquemos!</span></h3>
+                                <div id="lesson-questions-list" class="space-y-6"></div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                                 <button id="generate-button" class="flex-1 btn-secondary-fun py-4 text-lg flex items-center justify-center gap-2">✨ <span data-i18n="regenerate">Versión más larga</span></button>
+                                <button id="complete-button" class="flex-[2] btn-fun py-4 text-lg shadow-lg shadow-blue-500/30 text-white">✅ <span data-i18n="complete">¡Terminé!</span> (+50)</button>
+                            </div>
+                            <div class="mt-12 pt-8 border-t-4 border-dashed border-slate-100">
+                                <div id="show-more-btn" class="text-center mb-6"><h3 class="text-xl font-bold text-slate-400" data-i18n="moreInfo">👇 Sigue explorando</h3></div>
+                                <div id="more-info-section" class="flex flex-wrap justify-center gap-3 relative z-20">
+                                    <div id="subcategories-list" class="flex flex-wrap justify-center gap-3 w-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quizView" class="view hidden max-w-4xl mx-auto pb-20 relative z-20">
+            <div id="quiz-placeholder" class="bg-white p-8 sm:p-12 rounded-[2rem] shadow-xl border border-slate-100 text-center py-20 sm:py-32">
+                <div class="text-8xl sm:text-9xl mb-8">🧠</div>
+                <h2 class="text-4xl sm:text-5xl font-bold text-slate-800 mb-4 fun-font" data-i18n="quizZone">Zona de Pruebas</h2>
+                <p class="text-slate-500 text-lg sm:text-2xl max-w-lg mx-auto leading-relaxed mb-8" data-i18n="quizDesc">¡Demuestra lo que sabes con retos sorpresa!</p>
+                <div class="grid md:grid-cols-2 gap-8 text-left">
+                    <div class="mb-6 md:mb-0">
+                         <h3 class="font-bold text-slate-700 mb-4 text-lg" data-i18n="quizHistory">Tu Historial de Pruebas:</h3>
+                         <div id="quiz-history-list" class="max-h-60 overflow-y-auto pr-2 text-sm text-slate-500"><p data-i18n="noQuizHistory">Aún no has hecho ninguna prueba.</p></div>
+                    </div>
+                    <div class="flex flex-col justify-center gap-4">
+                        <button id="start-random-quiz" class="btn-fun text-lg w-full py-4" data-i18n="startQuiz">🚀 Iniciar Prueba Sorpresa</button>
+                        <button onclick="document.getElementById('tab-lesson').click()" class="btn-secondary-fun text-lg w-full" data-i18n="goToStudy">Ir a Estudiar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="quiz-container" class="hidden">
+                <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 p-6 sm:p-14">
+                    <div class="flex justify-between items-center mb-8 border-b-2 border-slate-100 pb-6">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 fun-font" id="quiz-topic-title">Cargando...</h2>
+                        <div class="flex gap-2 items-center">
+                            <button onclick="exitQuiz()" class="btn-danger-fun" data-i18n="exit">Salir</button>
+                        </div>
+                    </div>
+                    <div id="quiz-questions-list" class="space-y-6"></div>
+                    <button id="finish-quiz-btn" class="hidden mt-8 w-full btn-fun text-lg py-4" data-i18n="saveResult">Guardar Resultado</button>
+                    <div id="quiz-result" class="hidden mt-8 p-6 bg-green-50 rounded-[2rem] border-2 border-green-200 text-center animate-fade-in">
+                        <p class="text-3xl sm:text-4xl font-bold text-green-600 fun-font mb-2" data-i18n="quizFinished">¡Prueba Finalizada! 🎉</p>
+                        <p class="text-green-700 font-bold text-xl" id="quiz-score-text">+30 Puntos</p>
+                        <button onclick="exitQuiz()" class="mt-6 btn-secondary-fun" data-i18n="backQuiz">Volver</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sticky-audio-player">
+        <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg border-4 border-white animate-pulse flex-shrink-0">👩‍🏫</div>
+        <div class="flex-grow mx-4 overflow-hidden">
+            <p class="text-[10px] font-bold text-pink-500 uppercase tracking-widest mb-0.5" data-i18n="profGemini">PROFE AI</p>
+            <p class="text-sm font-bold text-slate-800 truncate" id="player-status" data-i18n="loadingVoice">Cargando voz...</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="player-play-pause" class="w-12 h-12 rounded-full bg-slate-900 text-white font-bold text-xl active:bg-slate-700 shadow-md transition-all flex items-center justify-center cursor-pointer">⏸</button>
+            <button id="player-close" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 active:bg-red-100 active:text-red-500 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+    </div>
+
+    <button id="assistant-btn"></button>
+
+    <div class="chat-overlay" id="chat-overlay">
+        <div class="chat-box">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white flex justify-between items-center flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div id="chat-header-icon" class="w-10 h-10 bg-white rounded-full bg-cover bg-center border-2 border-white"></div>
+                    <div>
+                        <h3 class="font-bold text-lg fun-font">Robi</h3>
+                        <div class="flex items-center gap-2">
+                            <p class="text-[10px] text-blue-200 font-medium" data-i18n="personalTutor">Tu Profe Personal</p>
+                            <button class="bg-blue-500 active:bg-blue-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider" title="Historial Guardado" data-i18n="historyBtn">📜 Historial</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="minimize-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold mb-2 transition cursor-pointer">_</button>
+                    <button id="close-chat" class="text-white/70 active:text-white active:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-2xl transition cursor-pointer">✕</button>
+                </div>
+            </div>
+            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-4 bg-slate-50 text-base"></div>
+            <div class="p-3 bg-white border-t border-slate-100 flex gap-2 items-center flex-shrink-0 pb-6 md:pb-3">
+                <button id="voice-chat-btn" class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 active:bg-blue-600 active:text-white transition flex items-center justify-center flex-shrink-0 text-xl shadow-sm border-2 border-transparent cursor-pointer">🎤</button>
+                <input type="text" id="chat-input" class="flex-grow bg-slate-100 rounded-full px-4 py-2 outline-none focus:ring-4 focus:ring-blue-100 text-base h-12 text-slate-700 placeholder-slate-400" placeholder="Escribe tu duda...">
+                <button id="send-chat" class="bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg active:bg-blue-700 flex items-center justify-center flex-shrink-0 text-xl transform active:scale-95 transition cursor-pointer">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const geminiApiKey = "AIzaSyBAEs1h3AaqoUTP7O36j0Ce992klTnTNYg"; 
+        const openAiApiKey = "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";
+        const xaiApiKey = "xai-mIqGxlPmsdVc6U1hJWbW7IUfpWIuwPxTOUlRQ0dEvQpXatIqRksxM3TUnGcFCPRwRbcxQ5Id7EoaqHbf";
+        const murfApiKey = "ap2_80cff77b-d30b-4070-b68a-5b83755ee202";
+        
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+        const geminiTtsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiApiKey}`;
+        const robiIconUrl = "https://image.pollinations.ai/prompt/cute%203d%20avatar%20young%20female%20teacher%20low%20ponytail%20black%20hair%20black%20glasses%20friendly%20icon%20soft%20lighting?width=150&height=150&nologo=true";
+
+        const STATIC_TOPICS_ES = ["Los Planetas", "Dinosaurios", "Volcanes", "El Océano", "El Cuerpo Humano", "Antiguo Egipto", "Los Robots", "La Electricidad", "Animales Polares", "La Lluvia", "Las Abejas", "El Espacio", "Los Castillos", "Las Pirámides", "Los Tiburones", "La Fotosíntesis", "La Gravedad", "Los Trenes", "Los Aviones", "Los Bosques"];
+        const STATIC_TOPICS_EN = ["The Planets", "Dinosaurs", "Volcanoes", "The Ocean", "Human Body", "Ancient Egypt", "Robots", "Electricity", "Polar Animals", "Rain", "Bees", "Space", "Castles", "Pyramids", "Sharks", "Photosynthesis", "Gravity", "Trains", "Airplanes", "Forests"];
+        const BASE_FACTS = [ { es: "Las abejas bailan para decir dónde están las flores.", en: "Bees dance to tell where flowers are." }, { es: "El corazón de un camarón está en su cabeza.", en: "A shrimp's heart is in its head." }, { es: "Los delfines duermen con un ojo abierto.", en: "Dolphins sleep with one eye open." }, { es: "Venus es el planeta más caliente del sistema solar.", en: "Venus is the hottest planet in the solar system." }, { es: "Los pulpos tienen 3 corazones.", en: "Octopuses have 3 hearts." } ];
+
+        const state = { lang: localStorage.getItem('appLang') || 'es', userName: localStorage.getItem('userName') || null, points: 0, history: [], quizHistory: [], currentLesson: null, audioCache: new Map(), audioSource: null, isPlaying: false, currentText: "", itemsToShow: 9, isVoiceActive: false, isNative: false, currentFacts: [], currentFactIndex: 0, searchHistory: [], chatHistory: [] };
+
+        const i18n = {
+            es: { preparing: "Preparando...", appTitle: "Mundo [NAME]", welcome: "¡Hola, [NAME]! 👋", subtitle: "¿Qué quieres descubrir hoy?", tabLessons: "📚 Lecciones", tabQuizzes: "🧠 Pruebas", factTitle: "Curiosidad:", loading: "Cargando...", go: "Ir", recent: "Recientes:", explore: "Explorar", trophies: "Trofeos", loadMore: "🌟 ¡Ver más cosas! 🌟", back: "Volver", preparingLesson: "Robi está preparando la clase...", errorTitle: "¡Ups!", errorDesc: "Robi tuvo un problema.", retry: "Reintentar", letsPractice: "¡Practiquemos!", regenerate: "Versión más larga", complete: "¡Terminé!", moreInfo: "👇 Sigue explorando", quizZone: "Zona de Pruebas", quizDesc: "¡Demuestra lo que sabes!", quizHistory: "Tu Historial:", noQuizHistory: "Sin pruebas.", startQuiz: "🚀 Iniciar Prueba", goToStudy: "Ir a Estudiar", finalExam: "Examen Final", exit: "Salir", saveResult: "Guardar Resultado", quizFinished: "¡Finalizada! 🎉", backQuiz: "Volver", profGemini: "PROFE AI", loadingVoice: "Cargando voz...", personalTutor: "Tu Profe Personal", historyBtn: "📜 Historial", chatPlaceholder: "Escribe tu duda...", searchPlaceholder: "✨ Busca aquí...", points: "Puntos", won: "GANADO", question: "Pregunta", correct: "¡Correcto!", tryAgain: "Intenta otra vez", thinking: "Pensando...", voiceBasic: "Voz básica...", greeting: "¡Hola! Soy Robi. 🍎", namePrompt: "¿Cuál es tu nombre?", nameSubtitle: "Seré tu tutor personal.", nameSubmit: "¡Empezar!" },
+            en: { preparing: "Preparing...", appTitle: "[NAME]'s World", welcome: "Hello, [NAME]! 👋", subtitle: "Discover today?", tabLessons: "📚 Lessons", tabQuizzes: "🧠 Quizzes", factTitle: "Fun Fact:", loading: "Loading...", go: "Go", recent: "Recent:", explore: "Explore", trophies: "Trophies", loadMore: "🌟 See more! 🌟", back: "Back", preparingLesson: "Robi is preparing...", errorTitle: "Oops!", errorDesc: "Problem.", retry: "Retry", letsPractice: "Let's Practice!", regenerate: "Longer Version", complete: "Done!", moreInfo: "👇 Explore", quizZone: "Quiz Zone", quizDesc: "Show knowledge!", quizHistory: "History:", noQuizHistory: "No quizzes.", startQuiz: "🚀 Start Quiz", goToStudy: "Go Study", finalExam: "Exam", exit: "Exit", saveResult: "Save", quizFinished: "Finished! 🎉", backQuiz: "Back", profGemini: "GEMINI", loadingVoice: "Loading voice...", personalTutor: "Tutor", historyBtn: "📜 History", chatPlaceholder: "Type...", searchPlaceholder: "✨ Search...", points: "Points", won: "WON", question: "Question", correct: "Correct!", tryAgain: "Try again", thinking: "Thinking...", voiceBasic: "Basic voice...", greeting: "Hi! I'm Robi. 🍎", namePrompt: "Name?", nameSubtitle: "Your tutor.", nameSubmit: "Start!" }
+        };
+
+        window.b64ToBuf = function(b64) { const bin=atob(b64); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return arr.buffer; }
+        window.pcmToWav = function(pcm) { const buf=new ArrayBuffer(44+pcm.length*2); const view=new DataView(buf); const writeString=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i))}; writeString(0,'RIFF');view.setUint32(4,36+pcm.length*2,true);writeString(8,'WAVE');writeString(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,24000,true);view.setUint32(28,48000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);writeString(36,'data');view.setUint32(40,pcm.length*2,true);for(let i=0;i<pcm.length;i++)view.setInt16(44+i*2,pcm[i],true);return new Blob([view],{type:'audio/wav'}); }
+        
+        function stripEmojis(str) {
+            if(!str) return "";
+            return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+        }
+
+        function updateUI() {
+            const t = i18n[state.lang];
+            const userName = state.userName || 'Mikhail';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (t[key]) el.textContent = t[key]; });
+            
+            document.getElementById('welcome-greeting').textContent = t.welcome.replace('[NAME]', userName);
+            document.getElementById('app-title-display').textContent = t.appTitle.replace('[NAME]', userName);
+
+            document.getElementById('topic-search').placeholder = t.searchPlaceholder;
+            document.getElementById('chat-input').placeholder = t.chatPlaceholder;
+            const nameField = document.getElementById('nameInputField'); if(nameField) nameField.placeholder = state.lang === 'es' ? 'Tu Nombre' : 'Your Name';
+            const flagSrc = state.lang === 'es' ? 'https://flagcdn.com/w40/mx.png' : 'https://flagcdn.com/w40/us.png';
+            const langText = state.lang.toUpperCase();
+            if (document.getElementById('lang-toggle')) { document.querySelector('#lang-toggle .flag-icon').src = flagSrc; document.querySelector('#lang-toggle span').textContent = langText; }
+            if (document.getElementById('lang-toggle-intro')) { document.querySelector('#lang-toggle-intro .flag-icon').src = flagSrc; document.querySelector('#lang-toggle-intro span').textContent = langText; }
+            document.getElementById('points-display').textContent = `${state.points} ${t.points}`;
+            document.getElementById('assistant-btn').style.backgroundImage = `url('${robiIconUrl}')`;
+            document.getElementById('chat-header-icon').style.backgroundImage = `url('${robiIconUrl}')`;
+            updateFactUI(); renderMosaics(); renderHistory(); renderQuizHistory(); renderSearchHistory();
+        }
+
+        function getImageUrl(topicEn) { return `https://image.pollinations.ai/prompt/modern%20editorial%20illustration%20of%20${encodeURIComponent(topicEn)}%20flat%20vector%20art%20vibrant%20gradients%20clean%20shapes%20soft%20shadows%20minimalist%20tech%20style%20full%20scene%20colorful%20background%20high%20quality?width=600&height=400&nologo=true`; }
+
+        function initFacts() { state.currentFacts = [...BASE_FACTS].sort(() => 0.5 - Math.random()).slice(0, 5); state.currentFactIndex = 0; updateFactUI(); }
+        function getTranslatedFact(factObj) { return factObj[state.lang] || factObj.es; }
+        function updateFactUI() { if(state.currentFacts.length === 0) initFacts(); const factObj = state.currentFacts[state.currentFactIndex]; const factText = getTranslatedFact(factObj); const el = document.getElementById('daily-fact'); el.style.opacity = '0'; setTimeout(() => { el.innerText = factText; el.style.opacity = '1'; document.getElementById('fact-counter').innerText = `${state.currentFactIndex + 1}/5`; }, 200); }
+        document.getElementById('next-fact').onclick = () => { if(state.currentFactIndex < 4) { state.currentFactIndex++; updateFactUI(); } else { state.currentFacts = [...BASE_FACTS].sort(() => 0.5 - Math.random()).slice(0, 5); state.currentFactIndex = 0; updateFactUI(); } };
+        document.getElementById('prev-fact').onclick = () => { if(state.currentFactIndex > 0) { state.currentFactIndex--; updateFactUI(); } };
+
+        function renderMosaics(append = false) {
+            const container = document.getElementById('category-mosaics'); if(!append) container.innerHTML = ''; const list = state.lang === 'es' ? STATIC_TOPICS_ES : STATIC_TOPICS_EN;
+            for(let i=0; i < Math.min(state.itemsToShow, list.length); i++) {
+                const topic = list[i]; if(append && i < state.itemsToShow - 9) continue; const card = document.createElement('div'); card.className = "topic-card animate-fade-in"; const topicEn = STATIC_TOPICS_EN[i] || topic; const img = getImageUrl(topicEn);
+                card.innerHTML = `<div class="topic-image" style="background-image: url('${img}')"></div><div class="topic-overlay"><span class="font-bold text-white text-2xl fun-font drop-shadow-md tracking-wide">${topic}</span></div>`;
+                const load = () => loadLesson(topic, topic, topicEn, img, false);
+                card.onclick = load; card.ontouchstart = (e) => { e.preventDefault(); load(); };
+                container.appendChild(card);
+            }
+        }
+        function renderHistory() {
+            const cont = document.getElementById('learned-gallery'); if(!cont) return; cont.innerHTML = ''; if(state.history.length === 0) { cont.innerHTML = `<p class="text-slate-400 font-medium text-center col-span-full py-8 text-xl">...</p>`; return; }
+            const t = i18n[state.lang];
+            state.history.forEach(item => { const card = document.createElement('div'); card.className = "bg-white border-0 rounded-2xl p-4 flex flex-col justify-between h-32 active:scale-95 transition cursor-pointer relative overflow-hidden group shadow-md"; card.innerHTML = `<div class="absolute top-0 right-0 px-3 py-1 bg-amber-400 text-white rounded-bl-xl text-xs font-bold shadow-sm">🏆 ${t.won}</div><h3 class="font-bold text-slate-700 text-lg group-hover:text-blue-600">${item.displayTopic}</h3><p class="text-xs text-slate-400 font-bold">${new Date(item.date).toLocaleDateString()}</p>`; card.onclick = () => loadLesson(item.displayTopic, item.topicEs, item.topicEn, getImageUrl(item.topicEn), false); cont.appendChild(card); });
+        }
+        function renderQuizHistory() {
+            const list = document.getElementById('quiz-history-list'); if(!list) return; list.innerHTML = ''; const t = i18n[state.lang];
+            if(state.quizHistory.length === 0) { list.innerHTML = `<p>${t.noQuizHistory}</p>`; return; }
+            state.quizHistory.forEach(q => { const div = document.createElement('div'); div.className = 'quiz-history-item p-3 mb-2 bg-slate-50 rounded-xl flex justify-between'; div.innerHTML = `<div><p class="font-bold text-slate-700">${q.topic}</p><p class="text-xs text-slate-400">${new Date(q.date).toLocaleDateString()}</p></div><div class="font-bold text-green-600 text-lg">+${q.score}</div>`; list.appendChild(div); });
+        }
+        function renderSearchHistory() {
+            const container = document.getElementById('search-history-container'); const tagsDiv = document.getElementById('search-history-tags'); if(!tagsDiv) return; tagsDiv.innerHTML = '';
+            if(state.searchHistory.length > 0) { container.classList.remove('hidden'); const recent = [...new Set(state.searchHistory)].slice(0, 5); recent.forEach(term => { const tag = document.createElement('span'); tag.className = "search-tag"; tag.textContent = term; tag.onclick = () => { document.getElementById('topic-search').value = term; document.getElementById('search-btn').click(); }; tagsDiv.appendChild(tag); }); } else { container.classList.add('hidden'); }
+        }
+
+        // --- SISTEMA TRIPLE LLM (GEMINI + OPENAI + GROK) ---
+        async function fetchGeminiLLM(messagesOrPrompt, system, jsonMode=false) {
+            try {
+                const conf = jsonMode ? {responseMimeType: "application/json"} : {};
+                let contents = [];
+                // Adaptar si viene array de mensajes (memoria) o solo prompt
+                if(Array.isArray(messagesOrPrompt)) {
+                    contents = messagesOrPrompt.map(m => ({role: m.role === 'user' ? 'user' : 'model', parts: [{text: m.content}]}));
+                } else {
+                    contents = [{parts:[{text: messagesOrPrompt}]}];
+                }
+                
+                const res = await fetch(geminiApiUrl, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: contents, systemInstruction: {parts:[{text:system}]}, generationConfig: conf }) });
+                if(!res.ok) throw new Error("Gemini Fail");
+                const d = await res.json();
+                return d.candidates[0].content.parts[0].text;
+            } catch(e) { throw e; }
+        }
+
+        async function fetchOpenAI(messagesOrPrompt, system, jsonMode=false) {
+            try {
+                let messages = [];
+                if(Array.isArray(messagesOrPrompt)) {
+                    messages = [{role: "system", content: system}, ...messagesOrPrompt];
+                } else {
+                    messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
+                }
+
+                const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: messages,
+                        response_format: jsonMode ? { type: "json_object" } : { type: "text" }
+                    })
+                });
+                if(!res.ok) throw new Error("OpenAI Fail");
+                const d = await res.json();
+                return d.choices[0].message.content;
+            } catch(e) { throw e; }
+        }
+
+        async function fetchGrok(messagesOrPrompt, system, jsonMode=false) {
+            try {
+                let messages = [];
+                if(Array.isArray(messagesOrPrompt)) {
+                    messages = [{role: "system", content: system}, ...messagesOrPrompt];
+                } else {
+                    messages = [{role: "system", content: system}, {role: "user", content: messagesOrPrompt}];
+                }
+
+                const res = await fetch("https://api.x.ai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${xaiApiKey}` },
+                    body: JSON.stringify({
+                        model: "grok-beta",
+                        messages: messages,
+                    })
+                });
+                if(!res.ok) throw new Error("Grok Fail");
+                const d = await res.json();
+                return d.choices[0].message.content;
+            } catch(e) { throw e; }
+        }
+
+        function cleanJSON(text) {
+            let clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            return clean;
+        }
+
+        async function raceLLM(prompt, system, jsonMode=false) {
+             return Promise.any([
+                 fetchGeminiLLM(prompt, system, jsonMode), 
+                 fetchOpenAI(prompt, system, jsonMode),
+                 fetchGrok(prompt, system, jsonMode)
+             ])
+            .then(text => jsonMode ? cleanJSON(text) : text)
+            .catch(e => { console.error("Todas las IAs fallaron", e); return null; });
+        }
+
+        async function loadLesson(displayTopic, topicEs, topicEn, imgUrl, isMagicMode) {
+            if(!geminiApiKey) { alert("¡Falta la API KEY!"); return; }
+            const t = i18n[state.lang];
+            
+            sessionStorage.setItem('currentLesson', JSON.stringify({displayTopic, topicEs, topicEn, imgUrl, isMagicMode}));
+
+            if(!state.searchHistory.includes(displayTopic)) { state.searchHistory.unshift(displayTopic); localStorage.setItem('searchHist', JSON.stringify(state.searchHistory)); renderSearchHistory(); }
+            
+            document.getElementById('main-header').classList.add('hidden'); 
+            document.getElementById('discoveryContainer').style.display = 'none'; 
+            document.getElementById('lessonDetailContainer').style.display = 'block'; 
+            
+            document.getElementById('lesson-content-wrapper').classList.add('hidden'); document.getElementById('lesson-error-state').classList.add('hidden'); document.getElementById('lesson-loader').classList.remove('hidden'); window.scrollTo(0,0);
+            document.getElementById('lesson-title').textContent = displayTopic; document.getElementById('lesson-header-bg').style.backgroundImage = `url('${imgUrl}')`;
+            
+            const btn = document.getElementById('complete-button'); btn.disabled = false; btn.innerHTML = `✅ <span>${t.complete}</span> (+50)`; btn.className = "flex-[2] btn-fun py-4 text-lg shadow-lg shadow-blue-500/30 text-white"; 
+            
+            let promptText = `Crea una lección sobre: ${displayTopic}.`; let lengthConstraint = "Max 350 chars.";
+            if(isMagicMode) { promptText = `Genera una CLASE MAESTRA EXTENSA y DETALLADA sobre: ${displayTopic}. Explica como si fueras un cuentacuentos experto.`; lengthConstraint = "Minimo 800 caracteres. Usa parrafos claros."; }
+
+            const sys = `Eres un profesor de primaria amable. Tu audiencia son niños de 4 a 10 años. Usa lenguaje muy sencillo, emojis y sé muy motivador. Responde en JSON estricto. Idioma: ${state.lang === 'es' ? 'Español' : 'Inglés'}. IMPORTANTE: 1. NO SALUDES al principio. Ve directo al contenido. 2. Dirígete al niño en singular ("tú"). 3. ${lengthConstraint} JSON FORMAT: { "lesson": "Contenido educativo...", "questions": [{"q":"...","options":["A","B","C"],"correct":0}, {"q":"...","options":["..."],"correct":1}, {"q":"...","options":["..."],"correct":2}], "related": ["Tema 1", "Tema 2", "Tema 3"] }`;
+            
+            try {
+                const text = await raceLLM(promptText, sys, true);
+                if(!text) throw new Error("No response");
+                const data = JSON.parse(text);
+                sessionStorage.setItem('currentLessonData', JSON.stringify(data));
+                
+                renderLessonContent(data); state.currentLesson = { ...data, displayTopic, topicEs, topicEn, imgUrl }; prefetchAudio(data.lesson); 
+            } catch(e) { 
+                console.error(e); document.getElementById('lesson-loader').classList.add('hidden'); document.getElementById('lesson-error-state').classList.remove('hidden');
+                document.getElementById('retry-lesson-btn').onclick = () => loadLesson(displayTopic, topicEs, topicEn, imgUrl, isMagicMode);
+            }
+        }
+        function renderLessonContent(data) {
+            document.getElementById('lesson-loader').classList.add('hidden'); document.getElementById('lesson-content-wrapper').classList.remove('hidden'); document.getElementById('lesson-content').innerHTML = data.lesson;
+            const qList = document.getElementById('lesson-questions-list'); qList.innerHTML = '';
+            if(data.questions) { data.questions.forEach((item, idx) => { const qContainer = document.createElement('div'); qContainer.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"; let optionsHtml = ''; item.options.forEach((opt, optIdx) => { optionsHtml += `<div class="quiz-option mt-2" onclick="checkLessonAnswer(this, ${optIdx === item.correct}, '${opt}')">${opt}</div>`; }); qContainer.innerHTML = `<div class="flex justify-between items-center mb-3"><p class="font-bold text-lg text-slate-800">❓ ${item.q}</p><button class="text-blue-400 hover:text-blue-600 text-xl" onclick="speak('${item.q}')">🔊</button></div><div class="mt-2 space-y-2">${optionsHtml}</div>`; qList.appendChild(qContainer); }); }
+            const subList = document.getElementById('subcategories-list'); subList.innerHTML = '';
+            if (data.related) { data.related.forEach(tag => { const btn = document.createElement('button'); btn.className = "bg-white border-2 border-slate-200 text-slate-600 px-6 py-3 rounded-2xl font-bold hover:border-blue-400 hover:text-blue-600 hover:shadow-md transition text-lg relative z-20 cursor-pointer"; btn.textContent = tag; btn.onclick = () => loadLesson(tag, tag, tag, getImageUrl(tag), false); subList.appendChild(btn); }); }
+        }
+        document.getElementById('generate-button').onclick = () => { if(state.currentLesson) loadLesson(state.currentLesson.displayTopic, state.currentLesson.topicEs, state.currentLesson.topicEn, state.currentLesson.imgUrl, true); };
+        window.checkLessonAnswer = function(el, isCorrect, text) { const t = i18n[state.lang]; if(el.classList.contains('correct') || el.classList.contains('wrong')) return; if(isCorrect) { el.classList.add('correct'); speak(t.correct); } else { el.classList.add('wrong'); speak(t.tryAgain); } };
+
+        let currentQuizScore = 0;
+        async function startRandomQuiz() {
+            const list = state.lang === 'es' ? STATIC_TOPICS_ES : STATIC_TOPICS_EN; const topic = list[Math.floor(Math.random() * list.length)];
+            const t = i18n[state.lang];
+            
+            document.getElementById('main-header').classList.add('hidden');
+            document.getElementById('quiz-placeholder').classList.add('hidden'); document.getElementById('quiz-container').classList.remove('hidden'); document.getElementById('quiz-result').classList.add('hidden'); document.getElementById('finish-quiz-btn').classList.add('hidden'); document.getElementById('quiz-topic-title').innerText = t.loading; document.getElementById('quiz-questions-list').innerHTML = `<div class="text-center py-10"><div class="text-6xl animate-spin">🧠</div></div>`;
+            const sys = `Eres un profesor evaluador amable para niños pequeños de 4 a 10 años. Genera preguntas MUY sencillas, claras y divertidas. Usa emojis. Idioma: ${state.lang === 'es' ? 'Español' : 'Inglés'}. JSON FORMAT: { "questions": [{"q":"...","options":["A","B","C"],"correct":0}, {"q":"...","options":["..."],"correct":1}, {"q":"...","options":["..."],"correct":2}] }`;
+            const prompt = `Genera un examen muy sencillo de 3 preguntas sobre: ${topic}.`;
+            try {
+                const text = await raceLLM(prompt, sys, true);
+                if(!text) throw new Error("No response");
+                const data = JSON.parse(text);
+                document.getElementById('quiz-topic-title').innerText = topic; state.currentQuizTopic = topic; renderQuizQuestions(data.questions);
+            } catch(e) { console.error(e); alert("Error"); document.getElementById('tab-lesson').click(); }
+        }
+        window.exitQuiz = function() { 
+            document.getElementById('quiz-container').classList.add('hidden'); document.getElementById('quiz-placeholder').classList.remove('hidden'); window.speechSynthesis.cancel(); renderQuizHistory(); 
+        };
+        function renderQuizQuestions(questions) {
+            const qList = document.getElementById('quiz-questions-list'); qList.innerHTML = ''; currentQuizScore = 0; const t = i18n[state.lang];
+            questions.forEach((item, idx) => { const qContainer = document.createElement('div'); qContainer.className = "bg-slate-50 p-6 rounded-2xl border-2 border-slate-200"; let optionsHtml = ''; item.options.forEach((opt, optIdx) => { optionsHtml += `<div class="quiz-option mt-2" data-idx="${idx}" onclick="checkQuizAnswer(this, ${optIdx === item.correct})">${opt}</div>`; }); qContainer.innerHTML = `<div class="flex justify-between items-center mb-3"><p class="font-bold text-xl text-slate-800">${t.question} ${idx+1}: ${item.q}</p><button class="text-blue-400 hover:text-blue-600 text-xl" onclick="speak('${item.q}')">🔊</button></div><div class="space-y-3">${optionsHtml}</div>`; qList.appendChild(qContainer); }); document.getElementById('finish-quiz-btn').classList.remove('hidden');
+        }
+        window.checkQuizAnswer = function(el, isCorrect) { if(el.parentElement.querySelector('.correct') || el.parentElement.querySelector('.wrong')) return; if(isCorrect) { el.classList.add('correct'); currentQuizScore += 10; } else { el.classList.add('wrong'); } };
+        document.getElementById('finish-quiz-btn').onclick = () => {
+            const resultDiv = document.getElementById('quiz-result'); resultDiv.classList.remove('hidden'); document.getElementById('quiz-score-text').innerText = `+${currentQuizScore} ${i18n[state.lang].points}`; document.getElementById('finish-quiz-btn').classList.add('hidden');
+            addPoints(currentQuizScore); state.quizHistory.unshift({ topic: state.currentQuizTopic || "Prueba Sorpresa", score: currentQuizScore, date: new Date().toISOString() }); localStorage.setItem('quizHist', JSON.stringify(state.quizHistory));
+        };
+
+        document.getElementById('start-random-quiz').onclick = startRandomQuiz;
+        document.getElementById('complete-button').onclick = function() { addPoints(50); this.disabled = true; this.innerHTML = "🏆"; this.className = "flex-[2] bg-slate-300 text-slate-500 py-5 text-xl font-bold rounded-2xl cursor-default"; state.history.unshift({ displayTopic: state.currentLesson.displayTopic, topicEs: state.currentLesson.topicEs, topicEn: state.currentLesson.topicEn, date: new Date().toISOString() }); localStorage.setItem('hist', JSON.stringify(state.history)); };
+        function addPoints(pts) { state.points += pts; localStorage.setItem('pts', state.points); updateUI(); }
+
+        // --- SISTEMA DE AUDIO MULTI-API (MURF, OPENAI, GEMINI) ---
+        
+        async function fetchMurfAudio(text) {
+            // IDs de Murf para voces femeninas en MX y US
+            const voiceId = state.lang === 'es' ? 'es-MX-Valeria' : 'en-US-Natalie';
+            try {
+                const res = await fetch("https://api.murf.ai/v1/speech/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "api-key": murfApiKey
+                    },
+                    body: JSON.stringify({
+                        voiceId: voiceId,
+                        style: "General",
+                        text: text,
+                        rate: 0,
+                        pitch: 0,
+                        format: "MP3",
+                        channel: "MONO"
+                    })
+                });
+                if (!res.ok) throw new Error("Murf Fail");
+                const data = await res.json();
+                if (data.audioFile) return data.audioFile; 
+                throw new Error("No audio url");
+            } catch (e) { throw e; }
+        }
+
+        async function fetchOpenAIAudio(text) {
+            try {
+                const res = await fetch("https://api.openai.com/v1/audio/speech", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` },
+                    body: JSON.stringify({
+                        model: "tts-1",
+                        input: text,
+                        voice: "nova" // Voz femenina
+                    })
+                });
+                if(!res.ok) throw new Error("OpenAI TTS Fail");
+                const blob = await res.blob();
+                return URL.createObjectURL(blob);
+            } catch(e) { throw e; }
+        }
+
+        async function fetchGeminiAudio(text) {
+            try {
+                const res = await fetch(geminiTtsUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text: text}]}], generationConfig:{responseModalities:["AUDIO"], speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Kore"}}}}}) }); 
+                const d = await res.json(); 
+                if(d.candidates) { 
+                    const wav = window.pcmToWav(new Int16Array(window.b64ToBuf(d.candidates[0].content.parts[0].inlineData.data))); 
+                    return URL.createObjectURL(wav); 
+                }
+                throw new Error("Gemini TTS Fail");
+            } catch(e) { throw e; }
+        }
+
+        async function prefetchAudio(text) {
+            const cleanText = stripEmojis(text);
+            if(!cleanText || state.audioCache.has(cleanText.substring(0,20))) return;
+            try {
+                const url = await fetchOpenAIAudio(cleanText);
+                state.audioCache.set(cleanText.substring(0,20), url);
+            } catch(e) {
+                try {
+                    const urlG = await fetchGeminiAudio(cleanText);
+                    state.audioCache.set(cleanText.substring(0,20), urlG);
+                } catch(err){}
+            }
+        }
+        
+        // --- VOZ INSTANTANEA CON PRIORIDAD DE CALIDAD (6s timeout) ---
+        window.speak = async function(text) {
+            const t = i18n[state.lang];
+            if(!text) return;
+            const cleanText = stripEmojis(text);
+            
+            window.speechSynthesis.cancel(); 
+            if(state.audioSource) state.audioSource.pause();
+            
+            const player = document.getElementById('sticky-audio-player'); 
+            player.classList.add('visible'); 
+            document.getElementById('player-status').innerText = t.thinking; 
+            document.getElementById('player-play-pause').innerText = "⏳";
+            
+            let url = state.audioCache.get(cleanText.substring(0,20));
+
+            if (!url && geminiApiKey) {
+                // CARRERA: Murf vs OpenAI vs Gemini
+                const promises = [
+                    fetchMurfAudio(cleanText),
+                    fetchOpenAIAudio(cleanText),
+                    fetchGeminiAudio(cleanText)
+                ];
+
+                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve('timeout'), 6000));
+
+                try {
+                    const result = await Promise.race([Promise.any(promises), timeoutPromise]);
+                    
+                    if (result === 'timeout') {
+                        throw new Error("Timeout");
+                    } else {
+                        url = result;
+                        state.audioCache.set(cleanText.substring(0,20), url);
+                    }
+                } catch (e) {
+                    // Fallback a voz nativa femenina
+                    const u = new SpeechSynthesisUtterance(cleanText); 
+                    u.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
+                    const voices = window.speechSynthesis.getVoices();
+                    const femaleVoice = voices.find(v => v.lang.includes(state.lang === 'es' ? 'es' : 'en') && (v.name.includes('Google') || v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Samantha')));
+                    if(femaleVoice) u.voice = femaleVoice;
+
+                    window.speechSynthesis.speak(u); 
+                    document.getElementById('player-status').innerText = t.voiceBasic; 
+                    document.getElementById('player-play-pause').innerText = "▶";
+                    return;
+                }
+            }
+            
+            if(url) { 
+                const audio = new Audio(url); 
+                state.audioSource = audio; 
+                audio.play().catch(e=>console.log("Audio play error", e)); 
+                document.getElementById('player-status').innerText = cleanText.substring(0, 30) + "..."; 
+                document.getElementById('player-play-pause').innerText = "⏸"; 
+                audio.onended = () => document.getElementById('player-play-pause').innerText = "▶"; 
+            }
+        };
+
+        document.getElementById('player-play-pause').onclick = () => { if(state.audioSource) { if(state.audioSource.paused) state.audioSource.play(); else state.audioSource.pause(); } };
+        document.getElementById('player-close').onclick = () => { if(state.audioSource) state.audioSource.pause(); document.getElementById('sticky-audio-player').classList.remove('visible'); };
+
+        const chatOverlay = document.getElementById('chat-overlay');
+        document.getElementById('assistant-btn').onclick = () => chatOverlay.classList.add('open');
+        document.getElementById('close-chat').onclick = () => chatOverlay.classList.remove('open');
+        document.getElementById('minimize-chat').onclick = () => chatOverlay.classList.remove('open');
+        
+        function renderChatHistory() {
+            const box = document.getElementById('chat-messages'); box.innerHTML = ''; const t = i18n[state.lang];
+            if(state.chatHistory.length === 0) { box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-5 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-200 max-w-[85%] text-slate-700 font-medium leading-relaxed"><p>${t.greeting}</p></div></div>`; }
+            state.chatHistory.forEach(msg => { if(msg.role === 'user') { box.innerHTML += `<div class="flex justify-end"><div class="bg-blue-600 text-white p-4 rounded-3xl rounded-tr-none shadow-sm text-lg">${msg.text}</div></div>`; } else { box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-4 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-100">${msg.text}</div></div>`; } }); box.scrollTop = box.scrollHeight;
+        }
+
+        async function handleChat(forcedText=null) {
+            const inp = document.getElementById('chat-input'); const txt = forcedText || inp.value.trim(); if(!txt) return; if(!forcedText) inp.value = '';
+            const box = document.getElementById('chat-messages'); 
+            
+            // Add user message
+            state.chatHistory.push({role:'user', text:txt}); localStorage.setItem('chatHist', JSON.stringify(state.chatHistory));
+            box.innerHTML += `<div class="flex justify-end"><div class="bg-blue-600 text-white p-4 rounded-3xl rounded-tr-none shadow-sm text-lg">${txt}</div></div>`; box.scrollTop = box.scrollHeight;
+            
+            const sys = `Eres Robi, tutor para niños (4-10 años). Sé BREVE. NO SALUDES si no te saludan. Idioma: ${state.lang==='es'?'Español':'Inglés'}.`;
+            
+            // CONSTRUIR CONTEXTO (MEMORIA)
+            const recentHistory = state.chatHistory.slice(-10).map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'assistant', // 'assistant' para OpenAI, 'model' para Gemini (adapter handle it)
+                content: msg.text
+            }));
+
+            try {
+                // Enviar historial completo
+                const ans = await raceLLM(recentHistory, sys, false);
+                
+                if(!ans) throw new Error("No response");
+                state.chatHistory.push({role:'model', text:ans}); localStorage.setItem('chatHist', JSON.stringify(state.chatHistory));
+                box.innerHTML += `<div class="flex justify-start"><div class="bg-white p-4 rounded-3xl rounded-tl-none shadow-sm text-lg border border-slate-100">${ans}</div></div>`; box.scrollTop = box.scrollHeight; speak(ans);
+            } catch(e) {}
+        }
+        document.getElementById('send-chat').onclick = () => handleChat();
+        document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter') handleChat(); };
+        
+        // CHAT VOICE
+        const voiceBtn = document.getElementById('voice-chat-btn');
+        if ('webkitSpeechRecognition' in window) {
+            const r = new webkitSpeechRecognition(); r.continuous=false; r.interimResults=false;
+            voiceBtn.onclick = () => { r.lang = state.lang==='es'?'es-MX':'en-US'; r.start(); voiceBtn.classList.add('bg-red-500','text-white'); };
+            r.onresult = (e) => { voiceBtn.classList.remove('bg-red-500','text-white'); handleChat(e.results[0][0].transcript); };
+        } else { voiceBtn.style.display='none'; }
+        
+        // --- ARREGLO DEL BUSCADOR DE VOZ (GLOBAL) ---
+        const initSearchVoice = (e) => {
+             if(e) { e.preventDefault(); e.stopPropagation(); }
+             const btn = document.getElementById('search-mic-btn');
+             if (!('webkitSpeechRecognition' in window)) { alert("Tu navegador no soporta búsqueda por voz"); return; }
+             const rSearch = new webkitSpeechRecognition(); 
+             rSearch.continuous = false; rSearch.interimResults = false;
+             rSearch.lang = state.lang === 'es' ? 'es-MX' : 'en-US';
+             try { rSearch.start(); btn.classList.add('text-red-500', 'scale-125', 'animate-pulse'); } catch(err) { console.log("Voice err", err); }
+             rSearch.onresult = (event) => { 
+                const transcript = event.results[0][0].transcript; 
+                document.getElementById('topic-search').value = transcript; 
+                btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); 
+                document.getElementById('topic-search').focus();
+             };
+             rSearch.onerror = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); };
+             rSearch.onend = () => { btn.classList.remove('text-red-500', 'scale-125', 'animate-pulse'); };
+        };
+
+        const micBtn = document.getElementById('search-mic-btn');
+        if(micBtn) { micBtn.addEventListener('touchstart', initSearchVoice, {passive: false}); micBtn.addEventListener('click', initSearchVoice); }
+
+        function toggleLangIntro() { state.lang = state.lang==='es'?'en':'es'; localStorage.setItem('appLang', state.lang); updateUI(); }
+        
+        function startApp() {
+             try {
+                document.getElementById('global-loader').style.display = 'none';
+                
+                // RESTAURAR SESIÓN SI EXISTE (SOLUCION REINICIO MÓVIL)
+                const savedLesson = sessionStorage.getItem('currentLessonData');
+                const savedContext = sessionStorage.getItem('currentLesson');
+                
+                if (savedLesson && savedContext) {
+                    const ctx = JSON.parse(savedContext);
+                    const data = JSON.parse(savedLesson);
+                    document.getElementById('nameInputScreen').style.display = 'none';
+                    document.getElementById('app-container').style.display = 'block';
+                    document.getElementById('app-container').style.paddingTop = '80px'; 
+                    document.getElementById('app-container').style.opacity = '1';
+                    
+                    document.getElementById('main-header').classList.add('hidden'); 
+                    document.getElementById('discoveryContainer').style.display = 'none'; 
+                    document.getElementById('lessonDetailContainer').style.display = 'block';
+                    
+                    document.getElementById('lesson-title').textContent = ctx.displayTopic; 
+                    document.getElementById('lesson-header-bg').style.backgroundImage = `url('${ctx.imgUrl}')`;
+                    
+                    renderLessonContent(data);
+                    state.currentLesson = { ...data, ...ctx };
+                    updateUI();
+                    return; 
+                }
+
+                if (state.userName && state.userName.trim() !== "") {
+                    document.getElementById('nameInputScreen').style.display = 'none'; 
+                    document.getElementById('app-container').style.display = 'block'; 
+                    document.getElementById('app-container').style.paddingTop = '80px'; 
+                    document.getElementById('app-container').style.opacity = '1'; 
+                    updateUI();
+                } else {
+                    document.getElementById('nameInputScreen').style.display = 'flex'; 
+                    document.getElementById('app-container').style.display = 'none'; 
+                    updateUI(); 
+                }
+            } catch (e) { console.log(e); }
+        }
+        
+        document.getElementById('nameSubmitBtn').onclick = () => { const nameInput = document.getElementById('nameInputField').value.trim(); if (nameInput) { state.userName = nameInput.split(' ')[0]; localStorage.setItem('userName', state.userName); startApp(); } };
+        document.getElementById('reset-user-btn').onclick = () => { localStorage.removeItem('userName'); sessionStorage.clear(); location.reload(); };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try { 
+                window.speechSynthesis.getVoices(); 
+                const sPts = localStorage.getItem('pts'); if(sPts) state.points = parseInt(sPts); 
+                const sHist = localStorage.getItem('hist'); if(sHist) state.history = JSON.parse(sHist); 
+                const qHist = localStorage.getItem('quizHist'); if(qHist) state.quizHistory = JSON.parse(qHist); 
+                const searchHist = localStorage.getItem('searchHist'); if(searchHist) state.searchHistory = JSON.parse(searchHist); 
+                const chatHist = localStorage.getItem('chatHist'); if(chatHist) state.chatHistory = JSON.parse(chatHist); 
+                initFacts(); renderChatHistory(); 
+                setTimeout(() => { const frases = ["¡Correcto!", "Correct!", "Intenta otra vez", "Try again"]; frases.forEach(f => prefetchAudio(f)); }, 2000);
+            } catch (e) { }
+            
+            const langToggleMain = document.getElementById('lang-toggle'); if (langToggleMain) langToggleMain.onclick = toggleLangIntro; 
+            const langToggleIntro = document.getElementById('lang-toggle-intro'); if (langToggleIntro) langToggleIntro.onclick = toggleLangIntro;
+            
+            setTimeout(() => { startApp(); }, 500); 
+            
+            const switchTab = (active) => {
+                if(active === 'lesson' && document.getElementById('lessonDetailContainer').style.display === 'block') {
+                } else {
+                    sessionStorage.removeItem('currentLessonData');
+                }
+
+                document.getElementById('tab-lesson').className = active==='lesson' ? "btn-fun shadow-blue-400 ring-4 ring-blue-50" : "btn-secondary-fun";
+                document.getElementById('tab-quiz').className = active==='quiz' ? "btn-fun shadow-blue-400 ring-4 ring-blue-50" : "btn-secondary-fun";
+                document.getElementById('lessonView').style.display = active==='lesson' ? 'block' : 'none';
+                document.getElementById('quizView').style.display = active==='quiz' ? 'block' : 'none';
+                
+                if(active === 'quiz') { 
+                    document.getElementById('main-header').classList.add('hidden'); 
+                } else if(active === 'lesson') {
+                    if(document.getElementById('discoveryContainer').style.display !== 'none') {
+                         document.getElementById('main-header').classList.remove('hidden'); 
+                    } else {
+                        document.getElementById('main-header').classList.add('hidden'); 
+                    }
+                }
+            };
+            document.getElementById('tab-lesson').onclick = () => switchTab('lesson'); document.getElementById('tab-quiz').onclick = () => switchTab('quiz');
+            document.getElementById('load-more-btn').onclick = () => { state.itemsToShow += 9; renderMosaics(true); };
+            document.getElementById('search-btn').onclick = () => { const v = document.getElementById('topic-search').value; if(v) loadLesson(v, v, v, getImageUrl(v), false); };
+            document.getElementById('topic-search').onkeypress = (e) => { if(e.key==='Enter') document.getElementById('search-btn').click(); };
+            document.getElementById('back-button').onclick = () => { 
+                sessionStorage.removeItem('currentLessonData'); 
+                document.getElementById('lessonDetailContainer').style.display = 'none'; document.getElementById('discoveryContainer').style.display = 'block'; 
+                document.getElementById('main-header').classList.remove('hidden'); document.getElementById('main-tabs').classList.remove('hidden');
+                window.speechSynthesis.cancel(); if(state.audioSource) state.audioSource.pause(); document.getElementById('sticky-audio-player').classList.remove('visible'); window.scrollTo(0,0); 
+            };
+            document.getElementById('subtab-explore').onclick = (e) => { document.getElementById('section-explore').classList.remove('hidden'); document.getElementById('section-trophies').classList.add('hidden'); e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-trophies').classList.remove('text-blue-600','border-blue-600'); };
+            document.getElementById('subtab-trophies').onclick = (e) => { document.getElementById('section-explore').classList.add('hidden'); document.getElementById('section-trophies').classList.remove('hidden'); e.target.classList.add('text-blue-600','border-blue-600'); document.getElementById('subtab-explore').classList.remove('text-blue-600','border-blue-600'); renderHistory(); };
+        });
+    </script>
+</body>
+</html>
