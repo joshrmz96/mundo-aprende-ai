@@ -1,5 +1,6 @@
 const { getAdapter } = require('../adapters/index');
 const { logValidationWarnings } = require('../lib/envValidator');
+const { formatErrorDetails } = require('../lib/errorUtils');
 
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS || '15000', 10);
 const DEFAULT_VOICE = process.env.DEFAULT_TTS_VOICE || 'chatgpt'; // user requested chatgpt as default
@@ -41,26 +42,6 @@ function buildAdapters(providerIds) {
     }
     return adapter;
   });
-}
-
-/**
- * Formats error details for logging
- * @param {Error} err - The error object
- * @param {string} adapterId - The adapter identifier
- * @returns {Object} Formatted error details
- */
-function formatErrorDetails(err, adapterId) {
-  const isTimeout = err && (err.name === 'AbortError' || err.message?.includes('aborted'));
-  const isNetworkError = err && (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || err.code === 'ETIMEDOUT');
-  
-  return {
-    adapterId,
-    errorType: isTimeout ? 'timeout' : isNetworkError ? 'network' : 'api',
-    message: err?.message || String(err),
-    code: err?.code || null,
-    status: err?.status || null,
-    timestamp: new Date().toISOString(),
-  };
 }
 
 module.exports = async function handler(req, res) {

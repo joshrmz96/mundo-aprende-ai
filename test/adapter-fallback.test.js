@@ -1,5 +1,5 @@
 // Lightweight test to assert fallback behavior by mocking global.fetch.
-// Run with: node test/adapter-fallbakk.test.js
+// Run with: node test/adapter-fallback.test.js
 
 const assert = require('assert');
 
