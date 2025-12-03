@@ -2,11 +2,16 @@
   "name": "clase-magica-mikhail",
   "version": "1.0.0",
   "description": "Plataforma educativa con IA",
+  "type": "module",
   "scripts": {
-    "start": "serve public"
+    "start": "serve public",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests"
   },
   "dependencies": {
     "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   },
   "engines": {
     "node": "18.x"
