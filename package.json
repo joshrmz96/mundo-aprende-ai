@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Plataforma educativa con IA",
   "scripts": {
-    "start": "serve public"
+    "start": "serve public",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "node-fetch": "^3.3.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.x"
   }
 }
