@@ -2,6 +2,7 @@ import { GeminiAdapter } from '../gemini.js';
 import { OpenAIAdapter } from '../openai.js';
 import { GrokAdapter } from '../grok.js';
 import { MurfAdapter } from '../murf.js';
+import { PollinationsAdapter } from '../pollinations.js';
 import { createTextAdapters, createImageAdapters, createTTSAdapters } from '../index.js';
 
 // Save original env
@@ -62,6 +63,18 @@ describe('OpenAIAdapter', () => {
         const adapter = new OpenAIAdapter();
         expect(adapter.isConfigured()).toBe(true);
     });
+
+    test('should use default TTS voice', () => {
+        delete process.env.OPENAI_TTS_VOICE;
+        const adapter = new OpenAIAdapter();
+        expect(adapter.ttsVoice).toBe('nova');
+    });
+
+    test('should use custom TTS voice from env', () => {
+        process.env.OPENAI_TTS_VOICE = 'shimmer';
+        const adapter = new OpenAIAdapter();
+        expect(adapter.ttsVoice).toBe('shimmer');
+    });
 });
 
 describe('GrokAdapter', () => {
@@ -120,6 +133,36 @@ describe('MurfAdapter', () => {
         const adapter = new MurfAdapter();
         await expect(adapter.generateImage({})).rejects.toThrow('not supported');
     });
+
+    test('should use custom voice from env', () => {
+        process.env.MURF_VOICE_ES = 'custom-es-voice';
+        process.env.MURF_VOICE_EN = 'custom-en-voice';
+        const adapter = new MurfAdapter();
+        expect(adapter.voiceEs).toBe('custom-es-voice');
+        expect(adapter.voiceEn).toBe('custom-en-voice');
+    });
+});
+
+describe('PollinationsAdapter', () => {
+    test('should have correct providerId', () => {
+        const adapter = new PollinationsAdapter();
+        expect(adapter.providerId).toBe('pollinations');
+    });
+
+    test('isConfigured should always return true (no API key needed)', () => {
+        const adapter = new PollinationsAdapter();
+        expect(adapter.isConfigured()).toBe(true);
+    });
+
+    test('generateText should throw not supported error', async () => {
+        const adapter = new PollinationsAdapter();
+        await expect(adapter.generateText({})).rejects.toThrow('not supported');
+    });
+
+    test('generateTTS should throw not supported error', async () => {
+        const adapter = new PollinationsAdapter();
+        await expect(adapter.generateTTS({})).rejects.toThrow('not supported');
+    });
 });
 
 describe('Adapter Factory Functions', () => {
@@ -131,10 +174,11 @@ describe('Adapter Factory Functions', () => {
         expect(adapters[2].providerId).toBe('grok');
     });
 
-    test('createImageAdapters returns OpenAI adapter', () => {
+    test('createImageAdapters returns adapters in correct order', () => {
         const adapters = createImageAdapters();
-        expect(adapters).toHaveLength(1);
+        expect(adapters).toHaveLength(2);
         expect(adapters[0].providerId).toBe('openai');
+        expect(adapters[1].providerId).toBe('pollinations');
     });
 
     test('createTTSAdapters returns adapters in correct order', () => {

@@ -4,11 +4,18 @@ import { BaseAdapter } from './base.js';
  * Murf adapter for TTS generation (audio fallback)
  * Provider ID: murf
  * Env var: MURF_API_KEY
+ * 
+ * Note: Voice IDs and API endpoint should be verified against Murf's official documentation.
+ * See: https://docs.murf.ai for the latest API specifications.
+ * Voice IDs can be overridden via MURF_VOICE_ES and MURF_VOICE_EN environment variables.
  */
 export class MurfAdapter extends BaseAdapter {
     constructor() {
         super('murf');
         this.apiKey = process.env.MURF_API_KEY;
+        // Allow voice customization via env vars
+        this.voiceEs = process.env.MURF_VOICE_ES || 'es-ES-Standard-A';
+        this.voiceEn = process.env.MURF_VOICE_EN || 'en-US-Standard-A';
     }
 
     isConfigured() {
@@ -29,14 +36,16 @@ export class MurfAdapter extends BaseAdapter {
         }
 
         // Murf API voice mapping based on language
+        // Voice IDs can be configured via environment variables
         const voiceMap = {
-            'es': 'es-ES-Standard-A',
-            'en': 'en-US-Standard-A',
-            'default': 'en-US-Standard-A'
+            'es': this.voiceEs,
+            'en': this.voiceEn,
+            'default': this.voiceEn
         };
         const voice = voiceMap[lang] || voiceMap['default'];
 
-        // Step 1: Create speech synthesis request
+        // Create speech synthesis request
+        // Note: Verify endpoint and header format against Murf's official API documentation
         const createResponse = await fetch("https://api.murf.ai/v1/speech/generate", {
             method: 'POST',
             headers: {

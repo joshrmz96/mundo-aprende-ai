@@ -4,11 +4,16 @@ import { BaseAdapter } from './base.js';
  * OpenAI (ChatGPT) adapter for text, image, and TTS generation
  * Provider ID: openai
  * Env var: OPENAI_API_KEY
+ * 
+ * TTS voice can be customized via OPENAI_TTS_VOICE environment variable.
+ * Available voices: alloy, echo, fable, onyx, nova, shimmer
  */
 export class OpenAIAdapter extends BaseAdapter {
     constructor() {
         super('openai');
         this.apiKey = process.env.OPENAI_API_KEY;
+        // Default voice is 'nova', can be overridden via env var
+        this.ttsVoice = process.env.OPENAI_TTS_VOICE || 'nova';
     }
 
     isConfigured() {
@@ -77,6 +82,8 @@ export class OpenAIAdapter extends BaseAdapter {
             throw new Error('OpenAI API key not configured');
         }
 
+        // Note: OpenAI TTS voices are not language-specific; they work across languages.
+        // The lang parameter is preserved for compatibility with other adapters.
         const response = await fetch("https://api.openai.com/v1/audio/speech", {
             method: 'POST',
             headers: {
@@ -86,7 +93,7 @@ export class OpenAIAdapter extends BaseAdapter {
             body: JSON.stringify({
                 model: "tts-1",
                 input: text,
-                voice: "nova"
+                voice: this.ttsVoice
             })
         });
 

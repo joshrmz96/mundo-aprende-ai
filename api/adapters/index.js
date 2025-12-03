@@ -7,11 +7,13 @@ export { GeminiAdapter } from './gemini.js';
 export { OpenAIAdapter } from './openai.js';
 export { GrokAdapter } from './grok.js';
 export { MurfAdapter } from './murf.js';
+export { PollinationsAdapter } from './pollinations.js';
 
 import { GeminiAdapter } from './gemini.js';
 import { OpenAIAdapter } from './openai.js';
 import { GrokAdapter } from './grok.js';
 import { MurfAdapter } from './murf.js';
+import { PollinationsAdapter } from './pollinations.js';
 
 /**
  * Create text generation adapters in deterministic fallback order
@@ -28,12 +30,13 @@ export function createTextAdapters() {
 
 /**
  * Create image generation adapters in deterministic fallback order
- * Order: OpenAI (primary) - only provider with image generation
+ * Order: OpenAI DALL-E (primary) → Pollinations (fallback, free)
  * @returns {Array} Ordered list of image adapters
  */
 export function createImageAdapters() {
     return [
-        new OpenAIAdapter()
+        new OpenAIAdapter(),
+        new PollinationsAdapter()
     ];
 }
 

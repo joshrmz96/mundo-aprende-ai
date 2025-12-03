@@ -4,23 +4,29 @@ This module implements provider-specific adapters with deterministic fallback or
 
 ## Supported Providers
 
-| Provider ID | Text Generation | Image Generation | TTS (Text-to-Speech) |
-|------------|-----------------|------------------|---------------------|
-| `gemini`   | ✅ Primary      | ❌               | ❌                  |
-| `openai`   | ✅ Secondary    | ✅ Primary       | ✅ Primary          |
-| `grok`     | ✅ Tertiary     | ❌               | ❌                  |
-| `murf`     | ❌              | ❌               | ✅ Fallback         |
+| Provider ID    | Text Generation | Image Generation | TTS (Text-to-Speech) |
+|---------------|-----------------|------------------|---------------------|
+| `gemini`      | ✅ Primary      | ❌               | ❌                  |
+| `openai`      | ✅ Secondary    | ✅ Primary       | ✅ Primary          |
+| `grok`        | ✅ Tertiary     | ❌               | ❌                  |
+| `murf`        | ❌              | ❌               | ✅ Fallback         |
+| `pollinations`| ❌              | ✅ Fallback (free) | ❌                |
 
 ## Environment Variables
 
 Configure the following environment variables in your Vercel project or `.env` file:
 
-| Variable         | Required For | Description                    |
-|-----------------|--------------|--------------------------------|
-| `GEMINI_API_KEY` | Gemini       | Google AI Gemini API key       |
-| `OPENAI_API_KEY` | OpenAI       | OpenAI API key for ChatGPT, DALL-E, TTS |
-| `XAI_API_KEY`    | Grok         | xAI Grok API key               |
-| `MURF_API_KEY`   | Murf         | Murf AI API key for TTS        |
+| Variable           | Required For | Description                              |
+|-------------------|--------------|------------------------------------------|
+| `GEMINI_API_KEY`  | Gemini       | Google AI Gemini API key                 |
+| `OPENAI_API_KEY`  | OpenAI       | OpenAI API key for ChatGPT, DALL-E, TTS  |
+| `XAI_API_KEY`     | Grok         | xAI Grok API key                         |
+| `MURF_API_KEY`    | Murf         | Murf AI API key for TTS                  |
+| `OPENAI_TTS_VOICE`| OpenAI TTS   | Optional: TTS voice (default: "nova")    |
+| `MURF_VOICE_ES`   | Murf         | Optional: Spanish voice ID               |
+| `MURF_VOICE_EN`   | Murf         | Optional: English voice ID               |
+
+**Note:** Pollinations does not require an API key - it's a free service.
 
 ## Fallback Order
 
@@ -34,7 +40,7 @@ Configure the following environment variables in your Vercel project or `.env` f
 2. **Pollinations** (fallback) - Free service, no API key required
 
 ### TTS Generation (`/api/tts`)
-1. **OpenAI** (primary) - TTS-1 model with Nova voice
+1. **OpenAI** (primary) - TTS-1 model with configurable voice
 2. **Murf** (fallback) - Murf AI TTS service
 
 ## Architecture
@@ -133,6 +139,25 @@ export class NewProviderAdapter extends BaseAdapter {
 
 3. Add to the appropriate factory function (e.g., `createTextAdapters()`)
 
+## Voice Configuration
+
+### OpenAI TTS
+Available voices: `alloy`, `echo`, `fable`, `onyx`, `nova` (default), `shimmer`
+
+Set via environment variable:
+```
+OPENAI_TTS_VOICE=shimmer
+```
+
+### Murf TTS
+Voice IDs can be configured per language:
+```
+MURF_VOICE_ES=es-ES-Standard-A
+MURF_VOICE_EN=en-US-Standard-A
+```
+
+**Note:** Verify voice IDs against Murf's official API documentation at https://docs.murf.ai
+
 ## Testing
 
 Run tests with:
@@ -146,6 +171,7 @@ Tests cover:
 - Deterministic fallback execution
 - Individual adapter configuration checks
 - Factory function ordering
+- Voice configuration
 
 ## Error Handling
 

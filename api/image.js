@@ -11,7 +11,7 @@ export default async function handler(req) {
     if (!prompt) return new Response('Missing prompt', { status: 400 });
 
     // Create image adapters with deterministic fallback order
-    // OpenAI DALL-E is primary, falls back to Pollinations (free)
+    // OpenAI DALL-E (primary) → Pollinations (fallback, free)
     const adapters = createImageAdapters();
 
     try {
@@ -23,9 +23,7 @@ export default async function handler(req) {
         // Redirect to the generated image URL
         return Response.redirect(result, 302);
     } catch (error) {
-        // Fallback to Pollinations (free, no API key needed)
-        const encodedPrompt = encodeURIComponent(prompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/illustration%20of%20${encodedPrompt}%20vector%20flat%20colorful?width=600&height=400&nologo=true`;
-        return Response.redirect(imageUrl, 302);
+        // All providers failed
+        return new Response(JSON.stringify({ error: "Image generation failed", details: error.message }), { status: 500 });
     }
 }
