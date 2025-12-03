@@ -36,11 +36,16 @@ async function run() {
     if (url.includes('ok3')) {
       // return different shapes depending on the body (text/image/tts)
       const body = opts && opts.body ? JSON.parse(opts.body) : {};
-      if (body.prompt || body.messages || body.input) {
-        return { ok: true, json: async () => ({ text: 'successful text result' }) };
-      }
+      // TTS has both text and voice
       if (body.text && body.voice) {
         return { ok: true, json: async () => ({ url: 'https://example.com/audio.mp3' }) };
+      }
+      // Image and text both have prompt, so we need to differentiate by checking for specific fields
+      // The generateText call also has prompt, but we return text for all prompt-based calls
+      // and let the calling test verify proper field extraction
+      if (body.prompt) {
+        // Return both text and url to allow tests for both text and image to pass
+        return { ok: true, json: async () => ({ text: 'successful text result', url: 'https://example.com/image.png' }) };
       }
       return { ok: true, json: async () => ({ url: 'https://example.com/image.png' }) };
     }
@@ -50,7 +55,7 @@ async function run() {
   };
 
   // Now require adapters/generic to call them directly (avoids HTTP server)
-  const generic = require('../api/adapters/generic')({ id: 'test' });
+  const generic = require('../adapters/generic')({ id: 'test' });
 
   // Text fallback: simulate providers with URLs 'fail1', 'bad2', 'ok3'
   try {
@@ -66,7 +71,7 @@ async function run() {
     // call the second adapter (bad shape)
     const json2 = await (async () => {
       // we directly call postJson behavior by invoking generic with a base URL containing bad2
-      const gen2 = require('../api/adapters/generic')({ id: 'test', url: 'https://bad2.example/api' });
+      const gen2 = require('../adapters/generic')({ id: 'test', url: 'https://bad2.example/api' });
       // generateText should return null for unexpected shape
       const r = await gen2.generateText({ prompt: 'x', options: {} });
       assert.strictEqual(r, null, 'Expected second provider to return null for bad shape');
@@ -74,7 +79,7 @@ async function run() {
     })();
 
     // call the third adapter (ok3)
-    const gen3 = require('../api/adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
+    const gen3 = require('../adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
     const r3 = await gen3.generateText({ prompt: 'write me', options: {} });
     assert.ok(r3 && r3.text === 'successful text result', 'Expected third provider to return success text');
 
@@ -86,7 +91,7 @@ async function run() {
 
   // Image fallback
   try {
-    const genOk = require('../api/adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
+    const genOk = require('../adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
     const img = await genOk.generateImage({ prompt: 'img', options: {} });
     assert.ok(img && (img.imageUrl || img.base64), 'Expected image result from ok3 mock');
     console.log('Image fallback test passed');
@@ -97,7 +102,7 @@ async function run() {
 
   // TTS fallback
   try {
-    const genOk = require('../api/adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
+    const genOk = require('../adapters/generic')({ id: 'test', url: 'https://ok3.example/api' });
     const tts = await genOk.generateTTS({ text: 'hello', voice: 'chatgpt', options: {} });
     assert.ok(tts && (tts.audioUrl || tts.base64), 'Expected tts result from ok3 mock');
     console.log('TTS fallback test passed');
