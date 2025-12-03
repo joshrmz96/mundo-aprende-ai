@@ -58,8 +58,13 @@ describe('Adapter Fallback Tests', () => {
   });
 
   afterEach(() => {
-    // Restore original environment
-    process.env = originalEnv;
+    // Restore original environment properly
+    Object.keys(process.env).forEach((key) => {
+      if (!(key in originalEnv)) {
+        delete process.env[key];
+      }
+    });
+    Object.assign(process.env, originalEnv);
     // Clear module cache to reset adapters
     delete require.cache[require.resolve('../api/adapters/index')];
     delete require.cache[require.resolve('../api/adapters/gemini')];
