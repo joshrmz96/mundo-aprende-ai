@@ -1,56 +1,76 @@
+import { executeWithFallback } from './adapters/index.js';
+
 export const config = {
     runtime: 'edge',
 };
 
 export default async function handler(req) {
-    if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+    if (req.method !== 'POST') {
+        return new Response('Method Not Allowed', { status: 405 });
+    }
 
     try {
-        const { text, lang } = await req.json();
-        const GEMINI_KEY = process.env.GEMINI_API_KEY;
-        const OPENAI_KEY = process.env.OPENAI_API_KEY;
-        const MURF_KEY = process.env.MURF_API_KEY;
+        const { text, lang, voice } = await req.json();
 
-        // 1. OPENAI TTS (Balance perfecto Calidad/Velocidad)
-        const callOpenAI = async () => {
-            if (!OPENAI_KEY) throw new Error("No Key");
-            const response = await fetch("https://api.openai.com/v1/audio/speech", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "tts-1",
-                    input: text,
-                    voice: "nova"
-                })
+        if (!text) {
+            return new Response(JSON.stringify({ error: 'Missing text parameter' }), { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
             });
-            if (!response.ok) throw new Error("OpenAI Failed");
-            return response.blob(); // Devolvemos el archivo de audio
-        };
-
-        // 2. GEMINI TTS (Respaldo)
-        const callGemini = async () => {
-            if (!GEMINI_KEY) throw new Error("No Key");
-            // Nota: Gemini devuelve base64, hay que convertirlo si queremos mantener consistencia, 
-            // pero para simplicidad en edge, OpenAI es preferible como principal.
-            // Si OpenAI falla, el frontend usará voz nativa como último recurso.
-            throw new Error("Gemini Fallback not implemented in Edge for binary consistency, skipping to native.");
-        };
-
-        // Intentar OpenAI primero
-        try {
-            const audioBlob = await callOpenAI();
-            return new Response(audioBlob, {
-                headers: { 'Content-Type': 'audio/mpeg' }
-            });
-        } catch (e) {
-            // Si falla, devolvemos 500 para que el frontend use la voz nativa del navegador
-            return new Response(JSON.stringify({ error: "TTS API Failed" }), { status: 500 });
         }
 
+        // Use adapter system with deterministic fallback order
+        // Order: OpenAI (primary) → Gemini (secondary) → Murf (tertiary)
+        const result = await executeWithFallback('tts', 'generateTTS', {
+            text,
+            voice: voice || 'nova',
+            options: {
+                lang: lang || 'en-US'
+            }
+        });
+
+        // Handle different response types from providers
+        if (result.blob) {
+            // OpenAI returns a blob directly
+            return new Response(result.blob, {
+                headers: { 
+                    'Content-Type': 'audio/mpeg',
+                    'X-Provider': result.provider
+                }
+            });
+        }
+
+        if (result.base64) {
+            // Convert base64 to binary using Edge Runtime compatible method
+            // Note: Using atob() as Buffer is not available in Edge Runtime
+            const binaryString = atob(result.base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new Response(bytes, {
+                headers: { 
+                    'Content-Type': 'audio/mpeg',
+                    'X-Provider': result.provider
+                }
+            });
+        }
+
+        if (result.audioUrl) {
+            // Redirect to audio URL
+            return Response.redirect(result.audioUrl, 302);
+        }
+
+        throw new Error('No audio data received from provider');
+
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        console.error('[TTS API Error]', error.message);
+        // Return 500 so frontend can fallback to browser native speech
+        return new Response(JSON.stringify({ 
+            error: error.message || 'TTS API Failed' 
+        }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
