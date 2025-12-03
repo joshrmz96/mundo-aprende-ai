@@ -1,26 +1,12 @@
 /**
  * Murf AI Adapter
  * Supports: TTS (Text-to-Speech)
+ * 
+ * API Documentation: https://docs.murf.ai/reference/getting-started-with-your-api
+ * Endpoint: https://api.murf.ai/v1/speech/generate
  */
 
-const DEFAULT_TIMEOUT = 30000;
-
-/**
- * Create an AbortController with timeout
- * @param {number} timeout - Timeout in milliseconds
- * @param {AbortSignal} [externalSignal] - External abort signal to combine
- * @returns {{ controller: AbortController, timeoutId: NodeJS.Timeout }}
- */
-function createTimeoutController(timeout, externalSignal) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  if (externalSignal) {
-    externalSignal.addEventListener('abort', () => controller.abort());
-  }
-
-  return { controller, timeoutId };
-}
+import { DEFAULT_TIMEOUT, createTimeoutController } from './utils.js';
 
 /**
  * Generate text using Murf API

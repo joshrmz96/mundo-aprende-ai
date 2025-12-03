@@ -26,6 +26,8 @@ async function generateText({ prompt, options = {}, signal }) {
  * @param {number} [params.options.width] - Image width (default: 600)
  * @param {number} [params.options.height] - Image height (default: 400)
  * @param {string} [params.options.style] - Style prefix (default: 'illustration of')
+ * @param {string} [params.options.suffix] - Style suffix appended to prompt (default: 'vector flat colorful')
+ * @param {boolean} [params.options.nologo] - Hide Pollinations logo (default: true)
  * @param {AbortSignal} [params.signal] - Abort signal
  * @returns {Promise<string>} - Image URL
  */
@@ -33,12 +35,16 @@ async function generateImage({ prompt, options = {}, signal }) {
   const width = options.width || 600;
   const height = options.height || 400;
   const style = options.style !== undefined ? options.style : 'illustration of';
+  const suffix = options.suffix !== undefined ? options.suffix : 'vector flat colorful';
+  const nologo = options.nologo !== undefined ? options.nologo : true;
   
   const encodedPrompt = encodeURIComponent(prompt);
   const stylePrefix = style ? encodeURIComponent(style + ' ') : '';
+  const styleSuffix = suffix ? '%20' + encodeURIComponent(suffix) : '';
   
   // Build the Pollinations URL
-  const imageUrl = `https://image.pollinations.ai/prompt/${stylePrefix}${encodedPrompt}%20vector%20flat%20colorful?width=${width}&height=${height}&nologo=true`;
+  // Style prefix and suffix are configurable for different use cases
+  const imageUrl = `https://image.pollinations.ai/prompt/${stylePrefix}${encodedPrompt}${styleSuffix}?width=${width}&height=${height}&nologo=${nologo}`;
   
   return imageUrl;
 }

@@ -17,6 +17,62 @@ import * as grok from '../grok.js';
 import * as murf from '../murf.js';
 import * as pollinations from '../pollinations.js';
 import * as adapterIndex from '../index.js';
+import { DEFAULT_TIMEOUT, createTimeoutController, cleanJSON } from '../utils.js';
+
+describe('Utils', () => {
+  describe('DEFAULT_TIMEOUT', () => {
+    it('should be 30000ms', () => {
+      expect(DEFAULT_TIMEOUT).toBe(30000);
+    });
+  });
+
+  describe('createTimeoutController', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should create an AbortController', () => {
+      const { controller, timeoutId } = createTimeoutController(1000);
+      expect(controller).toBeInstanceOf(AbortController);
+      expect(timeoutId).toBeDefined();
+      clearTimeout(timeoutId);
+    });
+
+    it('should abort after timeout', () => {
+      const { controller, timeoutId } = createTimeoutController(1000);
+      expect(controller.signal.aborted).toBe(false);
+      jest.advanceTimersByTime(1000);
+      expect(controller.signal.aborted).toBe(true);
+      clearTimeout(timeoutId);
+    });
+  });
+
+  describe('cleanJSON', () => {
+    it('should return empty object for null/undefined', () => {
+      expect(cleanJSON(null)).toBe('{}');
+      expect(cleanJSON(undefined)).toBe('{}');
+    });
+
+    it('should remove markdown code blocks', () => {
+      const input = '```json\n{"key": "value"}\n```';
+      expect(cleanJSON(input)).toBe('{"key": "value"}');
+    });
+
+    it('should extract JSON object from text', () => {
+      const input = 'Some text {"key": "value"} more text';
+      expect(cleanJSON(input)).toBe('{"key": "value"}');
+    });
+
+    it('should handle already clean JSON', () => {
+      const input = '{"key": "value"}';
+      expect(cleanJSON(input)).toBe('{"key": "value"}');
+    });
+  });
+});
 
 describe('Gemini Adapter', () => {
   beforeEach(() => {
@@ -303,6 +359,27 @@ describe('Pollinations Adapter', () => {
       
       expect(result).toContain('width=600');
       expect(result).toContain('height=400');
+    });
+
+    it('should allow custom style prefix and suffix', async () => {
+      const result = await pollinations.generateImage({ 
+        prompt: 'a dog',
+        options: { style: 'photo of', suffix: 'realistic' }
+      });
+      
+      expect(result).toContain('photo%20of');
+      expect(result).toContain('realistic');
+    });
+
+    it('should allow disabling style prefix and suffix', async () => {
+      const result = await pollinations.generateImage({ 
+        prompt: 'simple prompt',
+        options: { style: '', suffix: '' }
+      });
+      
+      expect(result).toContain('simple%20prompt');
+      expect(result).not.toContain('illustration');
+      expect(result).not.toContain('vector');
     });
   });
 
