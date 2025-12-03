@@ -48,7 +48,7 @@ export async function generateTTS({ text, voice = 'en-US-1', options = {} }) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'api-key': apiKey
+            'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
             voiceId,

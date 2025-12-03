@@ -77,8 +77,9 @@ export async function generateText({ prompt, options = {} }) {
 }
 
 /**
- * Generate image using Gemini Imagen API
- * Note: Gemini Imagen API availability may vary
+ * Generate image using Gemini
+ * Note: Gemini's image generation capabilities are limited/experimental.
+ * This will attempt to use Imagen if available, otherwise falls back to next provider.
  * @param {Object} params
  * @param {string} params.prompt - Image description prompt
  * @param {Object} params.options - Additional options
@@ -93,43 +94,43 @@ export async function generateImage({ prompt, options = {} }) {
 
     const { signal } = options;
 
-    // Using Gemini's image generation model
-    const response = await fetch(
-        `${GEMINI_API_BASE}/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    role: 'user',
-                    parts: [{ text: `Generate an image: ${prompt}` }]
-                }],
-                generationConfig: {
-                    responseModalities: ['IMAGE', 'TEXT']
-                }
-            }),
-            signal
+    // Try using Imagen model for image generation (if available)
+    // Note: Imagen access requires specific API permissions
+    try {
+        const response = await fetch(
+            `${GEMINI_API_BASE}/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instances: [{ prompt }],
+                    parameters: {
+                        sampleCount: 1
+                    }
+                }),
+                signal
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`Gemini Imagen failed: ${response.status}`);
         }
-    );
 
-    if (!response.ok) {
-        throw new Error(`Gemini image generation failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    
-    // Look for inline image data
-    for (const part of parts) {
-        if (part.inlineData?.mimeType?.startsWith('image/')) {
+        const data = await response.json();
+        const predictions = data.predictions || [];
+        
+        if (predictions.length > 0 && predictions[0].bytesBase64Encoded) {
             return {
                 imageUrl: null,
-                base64: part.inlineData.data
+                base64: predictions[0].bytesBase64Encoded
             };
         }
+    } catch (error) {
+        // Imagen model may not be available, fall through to throw
+        console.error('[Gemini] Imagen not available:', error.message);
     }
 
-    throw new Error('Gemini did not return image data');
+    throw new Error('Gemini image generation not available - falling back to next provider');
 }
 
 /**

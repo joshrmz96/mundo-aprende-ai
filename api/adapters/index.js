@@ -86,10 +86,11 @@ export async function executeWithFallback(type, method, params) {
     const errors = [];
 
     for (const adapter of providers) {
+        let timeoutId;
         try {
             // Create abort controller for timeout
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
             // Add signal to options
             const paramsWithSignal = {
@@ -111,6 +112,9 @@ export async function executeWithFallback(type, method, params) {
                 provider: adapter.id
             };
         } catch (error) {
+            // Clear timeout to prevent timer leaks
+            if (timeoutId) clearTimeout(timeoutId);
+            
             // Log error and continue to next provider
             const errorMessage = error.name === 'AbortError' 
                 ? `${adapter.id}: Request timed out after ${timeoutMs}ms`

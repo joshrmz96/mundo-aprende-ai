@@ -41,9 +41,14 @@ export default async function handler(req) {
         }
 
         if (result.base64) {
-            // Convert base64 to binary
-            const binaryData = Uint8Array.from(atob(result.base64), c => c.charCodeAt(0));
-            return new Response(binaryData, {
+            // Convert base64 to binary using Edge Runtime compatible method
+            // Note: Using atob() as Buffer is not available in Edge Runtime
+            const binaryString = atob(result.base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new Response(bytes, {
                 headers: { 
                     'Content-Type': 'audio/mpeg',
                     'X-Provider': result.provider
